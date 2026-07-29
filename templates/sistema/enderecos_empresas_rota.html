@@ -1,0 +1,234 @@
+{% extends "base.html" %}
+
+{% block title %}Enderecos de Empresas{% endblock %}
+{% block page_title %}Enderecos de Empresas{% endblock %}
+
+{% block extra_css %}
+<style>
+    .address-field {
+        position: relative;
+    }
+
+    .address-suggestions {
+        position: absolute;
+        z-index: 30;
+        top: calc(100% + 6px);
+        left: 0;
+        right: 0;
+        display: none;
+        max-height: 260px;
+        overflow-y: auto;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        background: #fff;
+        box-shadow: 0 12px 26px rgba(15, 23, 42, 0.16);
+    }
+
+    .address-suggestions.is-open {
+        display: block;
+    }
+
+    .address-suggestion {
+        width: 100%;
+        border: 0;
+        border-bottom: 1px solid var(--border);
+        background: transparent;
+        color: var(--text);
+        cursor: pointer;
+        padding: 10px 12px;
+        text-align: left;
+    }
+
+    .company-address-table-wrap {
+        overflow-x: auto;
+    }
+
+    .company-address-table {
+        border-collapse: collapse;
+        min-width: 720px;
+        width: 100%;
+    }
+
+    .company-address-table th,
+    .company-address-table td {
+        border-bottom: 1px solid var(--border);
+        padding: 11px 12px;
+        text-align: left;
+        vertical-align: middle;
+    }
+
+    .company-address-table th {
+        color: var(--muted);
+        font-size: 0.75rem;
+        font-weight: 800;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="module-header">
+    <div>
+        <span class="section-kicker">{{ papel_modulo_label }}</span>
+        <h2>{{ modulo_titulo }}</h2>
+        <p>{{ modulo_descricao }}</p>
+    </div>
+    <div class="hero-actions">
+        <a href="{% url 'rota_motoboy' %}" class="btn btn-secondary">Voltar</a>
+        {% if permite_edicao %}
+        <a href="{% url 'rota_motoboy_nova' %}" class="btn btn-primary">Nova rota</a>
+        {% endif %}
+    </div>
+</section>
+
+{% if acesso_negado %}
+<div class="alert-banner">
+    Voce nao possui permissao para acessar essa area, contate o administrador.
+</div>
+{% else %}
+{% if permite_edicao %}
+<section class="card form-card">
+    <h3>Novo endereco</h3>
+    <form method="post" data-address-search-url="{% url 'buscar_enderecos_rota' %}">
+        {% csrf_token %}
+        <div class="form-grid">
+            <div>
+                <label for="{{ form.nome.id_for_label }}">{{ form.nome.label }}</label>
+                {{ form.nome }}
+                {% if form.nome.errors %}<div class="erro">{{ form.nome.errors|join:", " }}</div>{% endif %}
+            </div>
+            <div class="field-span address-field">
+                <label for="{{ form.endereco.id_for_label }}">{{ form.endereco.label }}</label>
+                {{ form.endereco }}
+                {% if form.endereco.errors %}<div class="erro">{{ form.endereco.errors|join:", " }}</div>{% endif %}
+            </div>
+            <div>
+                <label for="{{ form.ativo.id_for_label }}">{{ form.ativo.label }}</label>
+                {{ form.ativo }}
+                {% if form.ativo.errors %}<div class="erro">{{ form.ativo.errors|join:", " }}</div>{% endif %}
+            </div>
+        </div>
+        <button type="submit" class="btn btn-primary">Salvar endereco</button>
+    </form>
+</section>
+{% endif %}
+
+<section class="card">
+    <div class="card-header-simple">
+        <div>
+            <h3>Empresas cadastradas</h3>
+            <p>{{ enderecos|length }} endereco{% if enderecos|length != 1 %}s{% endif %} salvo{% if enderecos|length != 1 %}s{% endif %}</p>
+        </div>
+    </div>
+    {% if enderecos %}
+    <div class="company-address-table-wrap">
+        <table class="company-address-table">
+            <thead>
+                <tr>
+                    <th>Empresa</th>
+                    <th>Endereco</th>
+                    <th>Status</th>
+                    <th>Acoes</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for endereco in enderecos %}
+                <tr>
+                    <td><strong>{{ endereco.nome }}</strong></td>
+                    <td>{{ endereco.endereco }}</td>
+                    <td>{% if endereco.ativo %}Ativo{% else %}Inativo{% endif %}</td>
+                    <td>
+                        {% if permite_edicao %}
+                        <a href="{% url 'editar_endereco_empresa_rota' endereco.pk %}" class="btn btn-secondary">Editar</a>
+                        {% else %}
+                        -
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="empty-box">Nenhum endereco de empresa cadastrado ainda.</div>
+    {% endif %}
+</section>
+{% endif %}
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const form = document.querySelector("[data-address-search-url]");
+    let addressTimer = null;
+
+    function closeSuggestions() {
+        document.querySelectorAll(".address-suggestions").forEach(function (box) {
+            box.classList.remove("is-open");
+            box.innerHTML = "";
+        });
+    }
+
+    function ensureSuggestionBox(input) {
+        let box = input.parentElement.querySelector(".address-suggestions");
+        if (!box) {
+            box = document.createElement("div");
+            box.className = "address-suggestions";
+            input.parentElement.appendChild(box);
+        }
+        return box;
+    }
+
+    async function searchAddress(input) {
+        if (!form) return;
+        const url = new URL(form.dataset.addressSearchUrl, window.location.origin);
+        const term = input.value.trim();
+        if (term) {
+            url.searchParams.set("q", term);
+        }
+
+        try {
+            const response = await fetch(url);
+            const data = await response.json();
+            const box = ensureSuggestionBox(input);
+            box.innerHTML = "";
+            (data.resultados || []).forEach(function (item) {
+                const button = document.createElement("button");
+                button.type = "button";
+                button.className = "address-suggestion";
+                button.textContent = item.nome;
+                button.addEventListener("click", function () {
+                    input.value = item.nome;
+                    closeSuggestions();
+                });
+                box.appendChild(button);
+            });
+            box.classList.toggle("is-open", box.children.length > 0);
+        } catch (error) {
+            closeSuggestions();
+        }
+    }
+
+    document.addEventListener("input", function (event) {
+        const input = event.target.closest("input[data-address-autocomplete]");
+        if (!input) return;
+        window.clearTimeout(addressTimer);
+        addressTimer = window.setTimeout(function () {
+            searchAddress(input);
+        }, 300);
+    });
+
+    document.addEventListener("focusin", function (event) {
+        const input = event.target.closest("input[data-address-autocomplete]");
+        if (input) {
+            searchAddress(input);
+        }
+    });
+
+    document.addEventListener("click", function (event) {
+        if (!event.target.closest(".address-field")) {
+            closeSuggestions();
+        }
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block title %}Excluir Categoria{% endblock %}
+{% block page_title %}Excluir Categoria{% endblock %}
+
+{% block content %}
+<section class="module-header">
+    <div>
+        <span class="section-kicker">{{ papel_modulo_label }}</span>
+        <h2>Excluir {{ categoria.nome }}</h2>
+        <p>{{ modulo_descricao }}</p>
+    </div>
+    <a href="{% url 'categorias_estoque' modulo_codigo %}" class="btn btn-secondary">Voltar</a>
+</section>
+
+{% if acesso_negado %}
+<div class="alert-banner">
+    Voce nao possui permissao para acessar essa area, contate o administrador.
+</div>
+{% else %}
+<section class="card">
+    {% if itens_vinculados %}
+    <div class="alert-banner">
+        Esta categoria possui {{ itens_vinculados }} item{% if itens_vinculados != 1 %}s{% endif %} vinculado{% if itens_vinculados != 1 %}s{% endif %} e nao pode ser excluida.
+    </div>
+    <a href="{% url 'categorias_estoque' modulo_codigo %}" class="btn btn-secondary">Voltar para categorias</a>
+    {% else %}
+    <h3>Confirmar exclusao</h3>
+    <p>Esta acao remove a categoria deste estoque.</p>
+    <form method="post" class="form-inline">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-danger">Excluir categoria</button>
+        <a href="{% url 'categorias_estoque' modulo_codigo %}" class="btn btn-secondary">Cancelar</a>
+    </form>
+    {% endif %}
+</section>
+{% endif %}
+{% endblock %}

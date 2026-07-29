@@ -1,0 +1,471 @@
+{% extends "base.html" %}
+
+{% block title %}{{ modulo_titulo }}{% endblock %}
+{% block page_title %}{{ modulo_titulo }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .stock-overview {
+        display: grid;
+        gap: 12px;
+        grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+        margin-bottom: 14px;
+    }
+
+    .stock-kpi,
+    .stock-panel,
+    .stock-table-panel {
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        background: var(--surface);
+        box-shadow: var(--shadow-sm);
+    }
+
+    .stock-kpi {
+        padding: 14px;
+    }
+
+    .stock-kpi strong {
+        color: var(--muted);
+        display: block;
+        font-size: 0.73rem;
+        font-weight: 800;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+    }
+
+    .stock-kpi span {
+        display: block;
+        font-size: 1.64rem;
+        font-weight: 800;
+        line-height: 1.15;
+        margin-top: 5px;
+    }
+
+    .stock-dashboard-grid {
+        display: grid;
+        gap: 12px;
+        grid-template-columns: minmax(0, 1fr) minmax(300px, 0.8fr);
+        margin-bottom: 14px;
+    }
+
+    .stock-panel {
+        padding: 15px;
+    }
+
+    .stock-panel-header {
+        align-items: start;
+        display: flex;
+        gap: 12px;
+        justify-content: space-between;
+        margin-bottom: 12px;
+    }
+
+    .stock-panel-header h3 {
+        font-size: 1rem;
+        margin: 0 0 3px;
+    }
+
+    .stock-panel-header p {
+        color: var(--muted);
+        margin: 0;
+    }
+
+    .stock-category-list,
+    .stock-critical-list,
+    .stock-movement-list {
+        display: grid;
+        gap: 8px;
+    }
+
+    .stock-category-row,
+    .stock-critical-row,
+    .stock-movement-row {
+        align-items: center;
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        display: grid;
+        gap: 10px;
+        min-height: 52px;
+        padding: 10px;
+    }
+
+    .stock-category-row,
+    .stock-critical-row {
+        color: inherit;
+        text-decoration: none;
+    }
+
+    .stock-category-row:hover,
+    .stock-category-row.active,
+    .stock-critical-row:hover {
+        border-color: var(--accent);
+        background: var(--surface-tint);
+    }
+
+    .stock-category-row {
+        grid-template-columns: minmax(0, 1fr) auto auto;
+    }
+
+    .stock-critical-row,
+    .stock-movement-row {
+        grid-template-columns: minmax(0, 1fr) auto;
+    }
+
+    .stock-category-row strong,
+    .stock-critical-row strong,
+    .stock-movement-row strong {
+        display: block;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .stock-category-row span,
+    .stock-critical-row span,
+    .stock-movement-row span,
+    .stock-movement-row p {
+        color: var(--muted);
+        margin: 0;
+    }
+
+    .stock-alert-pill {
+        border-radius: 999px;
+        background: var(--warning-soft);
+        color: var(--warning);
+        font-size: 0.74rem;
+        font-weight: 800;
+        padding: 5px 9px;
+        white-space: nowrap;
+    }
+
+    .stock-alert-pill.danger {
+        background: var(--danger-soft);
+        color: var(--danger);
+    }
+
+    .stock-table-panel {
+        scroll-margin-top: 20px;
+        overflow-x: auto;
+    }
+
+    .stock-table-header {
+        align-items: center;
+        display: flex;
+        gap: 12px;
+        justify-content: space-between;
+        min-width: 820px;
+        padding: 15px 15px 0;
+    }
+
+    .stock-table-header h3 {
+        margin: 0 0 3px;
+    }
+
+    .stock-table-header p {
+        color: var(--muted);
+        margin: 0;
+    }
+
+    .stock-table {
+        border-collapse: collapse;
+        min-width: 820px;
+        width: 100%;
+    }
+
+    .stock-table th,
+    .stock-table td {
+        border-bottom: 1px solid var(--border);
+        padding: 12px 15px;
+        text-align: left;
+        vertical-align: middle;
+    }
+
+    .stock-table th {
+        color: var(--muted);
+        font-size: 0.74rem;
+        font-weight: 800;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        white-space: nowrap;
+    }
+
+    .stock-table td:last-child,
+    .stock-table th:last-child {
+        text-align: right;
+    }
+
+    .stock-product strong {
+        display: block;
+        margin-bottom: 3px;
+    }
+
+    .stock-product a {
+        color: var(--text);
+        text-decoration: none;
+    }
+
+    .stock-product a:hover {
+        color: var(--accent-strong);
+    }
+
+    .stock-product span {
+        color: var(--muted);
+        display: block;
+        font-size: 0.88rem;
+    }
+
+    .stock-status {
+        border-radius: 999px;
+        background: #e7f7f4;
+        color: #115e59;
+        display: inline-flex;
+        font-size: 0.74rem;
+        font-weight: 800;
+        padding: 5px 9px;
+        white-space: nowrap;
+    }
+
+    .stock-status.danger {
+        background: var(--danger-soft);
+        color: var(--danger);
+    }
+
+    .stock-row-actions {
+        display: inline-flex;
+        flex-wrap: wrap;
+        gap: 7px;
+        justify-content: flex-end;
+    }
+
+    .stock-icon-action {
+        align-items: center;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        display: inline-flex;
+        font-size: 1rem;
+        font-weight: 800;
+        height: 34px;
+        justify-content: center;
+        line-height: 1;
+        padding: 0;
+        width: 36px;
+    }
+
+    .movement-type {
+        border-radius: 999px;
+        background: var(--accent-soft);
+        color: var(--accent-strong);
+        font-size: 0.72rem;
+        font-weight: 800;
+        padding: 4px 8px;
+    }
+
+    .movement-type.saida {
+        background: var(--danger-soft);
+        color: var(--danger);
+    }
+
+    @media (max-width: 980px) {
+        .stock-dashboard-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    @media (max-width: 720px) {
+        .stock-panel-header,
+        .stock-table-header {
+            align-items: stretch;
+            flex-direction: column;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="module-header">
+    <div>
+        <span class="section-kicker">{{ papel_modulo_label }}</span>
+        <h2>{{ modulo_titulo }}</h2>
+        <p>{{ modulo_descricao }}</p>
+    </div>
+    <div class="hero-actions">
+        <button type="button" class="btn btn-secondary" onclick="history.back()">Voltar</button>
+        {% if not acesso_negado %}
+        <a href="{% url 'relatorio_estoque' modulo_codigo %}" class="btn btn-secondary">Relatorio e PDF</a>
+        <a href="{% url 'categorias_estoque' modulo_codigo %}" class="btn btn-secondary">Categorias</a>
+        {% endif %}
+        {% if mostrar_acoes %}
+        <a href="{% url 'novo_item_estoque' modulo_codigo %}" class="btn btn-primary">Novo item</a>
+        {% endif %}
+    </div>
+</section>
+
+{% if acesso_negado %}
+<div class="alert-banner">
+    Voce nao possui permissao para acessar essa area, contate o administrador.
+</div>
+{% else %}
+<section class="stock-overview">
+    <article class="stock-kpi">
+        <strong>Itens cadastrados</strong>
+        <span>{{ painel_estoque.total_itens }}</span>
+    </article>
+    <article class="stock-kpi">
+        <strong>Saldo total</strong>
+        <span>{{ painel_estoque.saldo_total }}</span>
+    </article>
+    <article class="stock-kpi">
+        <strong>Valor estimado</strong>
+        <span>R$ {{ painel_estoque.valor_estimado|floatformat:2 }}</span>
+    </article>
+    <article class="stock-kpi">
+        <strong>Em atencao</strong>
+        <span>{{ painel_estoque.baixo_estoque }}</span>
+    </article>
+    <article class="stock-kpi">
+        <strong>Sem estoque</strong>
+        <span>{{ painel_estoque.sem_estoque }}</span>
+    </article>
+</section>
+
+<section class="stock-dashboard-grid">
+    <article class="stock-panel">
+        <div class="stock-panel-header">
+            <div>
+                <h3>Resumo por categoria</h3>
+                <p>Distribuicao dos itens e saldo atual por grupo.</p>
+            </div>
+        </div>
+        {% if painel_estoque.categorias %}
+        <div class="stock-category-list">
+            {% for categoria in painel_estoque.categorias %}
+            <a href="?categoria={{ categoria.codigo }}#lista-itens-estoque" class="stock-category-row {% if filtros.categoria == categoria.codigo %}active{% endif %}">
+                <strong>{{ categoria.nome }}</strong>
+                <span>{{ categoria.itens }} itens</span>
+                <span>{{ categoria.saldo }} unidades</span>
+            </a>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-box">Nenhuma categoria com itens cadastrados.</div>
+        {% endif %}
+    </article>
+
+    <article class="stock-panel">
+        <div class="stock-panel-header">
+            <div>
+                <h3>Itens em atencao</h3>
+                <p>Prioridade para reposicao ou conferencia.</p>
+            </div>
+        </div>
+        {% if itens_criticos %}
+        <div class="stock-critical-list">
+            {% for item in itens_criticos %}
+            <a href="{% url 'detalhe_item_estoque' item.pk %}" class="stock-critical-row">
+                <div>
+                    <strong>{{ item.nome }}</strong>
+                    <span>Saldo {{ item.quantidade_atual }} {{ item.unidade_medida }} | minimo {{ item.estoque_minimo }}</span>
+                </div>
+                {% if item.quantidade_atual <= 0 %}
+                <span class="stock-alert-pill danger">Sem estoque</span>
+                {% else %}
+                <span class="stock-alert-pill">Baixo</span>
+                {% endif %}
+            </a>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-box">Nenhum item abaixo do minimo neste estoque.</div>
+        {% endif %}
+    </article>
+</section>
+
+<section class="card filter-panel">
+    <form method="get" action="{{ request.path }}#lista-itens-estoque" class="filter-form">
+        <div>
+            <label for="id_q">Pesquisar</label>
+            <input type="text" id="id_q" name="q" value="{{ filtros.q }}" placeholder="Nome, categoria, codigo ou descricao">
+        </div>
+        <div>
+            <label for="id_categoria">Categoria</label>
+            <select id="id_categoria" name="categoria">
+                <option value="">Todas</option>
+                {% for valor, label in categorias_estoque %}
+                <option value="{{ valor }}" {% if filtros.categoria == valor %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div>
+            <label for="id_status">Status</label>
+            <select id="id_status" name="status">
+                <option value="">Todos</option>
+                <option value="sem_estoque" {% if filtros.status == "sem_estoque" %}selected{% endif %}>Sem estoque</option>
+                <option value="perigoso" {% if filtros.status == "perigoso" %}selected{% endif %}>Estoque perigoso</option>
+                <option value="confortavel" {% if filtros.status == "confortavel" %}selected{% endif %}>Estoque confortavel</option>
+            </select>
+        </div>
+        <div class="filter-actions">
+            <button type="submit" class="btn btn-primary">Filtrar</button>
+            <a href="{{ request.path }}" class="btn btn-secondary">Limpar</a>
+        </div>
+    </form>
+</section>
+
+<section class="stock-table-panel" id="lista-itens-estoque">
+        <div class="stock-table-header">
+            <div>
+                <h3>{% if categoria_selecionada_label %}Itens de {{ categoria_selecionada_label }}{% else %}Itens do estoque{% endif %}</h3>
+                <p>{{ total_filtrado }} itens encontrados com os filtros atuais.</p>
+            </div>
+        </div>
+        {% if itens %}
+        <table class="stock-table">
+            <thead>
+                <tr>
+                    <th>Produto</th>
+                    <th>Entradas</th>
+                    <th>Saidas</th>
+                    <th>Saldo</th>
+                    <th>Estoque minimo</th>
+                    <th>Status</th>
+                    <th>Acoes</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in itens %}
+                <tr>
+                    <td class="stock-product">
+                        <strong><a href="{% url 'detalhe_item_estoque' item.pk %}">{{ item.nome }}</a></strong>
+                        <span>{{ item.categoria_nome }}{% if item.descricao %} | {{ item.descricao }}{% endif %}</span>
+                    </td>
+                    <td><strong>{{ item.total_entradas }}</strong></td>
+                    <td><strong>{{ item.total_saidas }}</strong></td>
+                    <td><strong>{{ item.quantidade_atual }}</strong> {{ item.unidade_medida }}</td>
+                    <td>{{ item.estoque_minimo }} {{ item.unidade_medida }}</td>
+                    <td>
+                        {% if item.estoque_baixo %}
+                        <span class="stock-status danger">{{ item.status_estoque }}</span>
+                        {% else %}
+                        <span class="stock-status">{{ item.status_estoque }}</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div class="stock-row-actions">
+                            <a href="{% url 'detalhe_item_estoque' item.pk %}" class="btn btn-secondary">Detalhes</a>
+                            {% if mostrar_acoes %}
+                            <a href="{% url 'editar_item_estoque' item.pk %}" class="btn btn-secondary stock-icon-action" title="Editar item" aria-label="Editar {{ item.nome }}">&#9998;</a>
+                            <a href="{% url 'movimentar_item_estoque' item.pk %}" class="btn btn-primary">Movimentar</a>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="empty-box">Nenhum item encontrado neste estoque.</div>
+        {% endif %}
+</section>
+{% endif %}
+{% endblock %}

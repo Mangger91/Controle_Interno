@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+
+{% block title %}{{ modulo_titulo }}{% endblock %}
+{% block page_title %}{{ modulo_titulo }}{% endblock %}
+
+{% block content %}
+<section class="module-header">
+    <div>
+        <span class="section-kicker">{{ papel_modulo_label }}</span>
+        <h2>{{ modulo_titulo }}</h2>
+        <p>{{ modulo_descricao }}</p>
+    </div>
+</section>
+
+{% if acesso_negado %}
+<div class="alert-banner">
+    Voce nao possui permissao para acessar essa area, contate o administrador.
+</div>
+{% else %}
+<section class="card">
+    <h3>Modulo base preparado</h3>
+    <p>
+        Esta area ja esta ligada ao menu e ao controle de acesso. Os proximos passos podem incluir
+        cadastro completo, fluxo operacional, filtros, historico e relatorios.
+    </p>
+    <div class="suggestion-box">
+        <strong>Ideias para evolucao</strong>
+        <p>Adicionar SLA em chamados, workflow de aprovacao no estoque e ciclos formais de avaliacao.</p>
+    </div>
+</section>
+{% endif %}
+{% endblock %}

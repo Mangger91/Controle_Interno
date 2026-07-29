@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+
+{% block title %}{{ item.nome }}{% endblock %}
+{% block page_title %}{{ item.nome }}{% endblock %}
+
+{% block content %}
+<section class="module-header">
+    <div>
+        <span class="section-kicker">{{ papel_modulo_label }}</span>
+        <h2>{{ item.nome }}</h2>
+        <p>{{ item.descricao|default:"Sem descricao." }}</p>
+    </div>
+    <div class="hero-actions">
+        <button type="button" class="btn btn-secondary" onclick="history.back()">Voltar</button>
+        {% if not acesso_negado %}
+        <a href="{% url 'relatorio_estoque' modulo_codigo %}" class="btn btn-secondary">Relatorio geral</a>
+        {% endif %}
+        {% if permite_edicao %}
+        <a href="{% url 'editar_item_estoque' item.pk %}" class="btn btn-secondary">Editar item</a>
+        <a href="{% url 'movimentar_item_estoque' item.pk %}" class="btn btn-primary">Nova movimentacao</a>
+        {% endif %}
+    </div>
+</section>
+
+{% if acesso_negado %}
+<div class="alert-banner">
+    Voce nao possui permissao para acessar essa area, contate o administrador.
+</div>
+{% else %}
+<section class="stats-grid">
+    <article class="stat-card">
+        <strong>Saldo atual</strong>
+        <span>{{ item.quantidade_atual }}</span>
+    </article>
+    <article class="stat-card">
+        <strong>Estoque minimo</strong>
+        <span>{{ item.estoque_minimo }}</span>
+    </article>
+    <article class="stat-card">
+        <strong>Unidade</strong>
+        <span>{{ item.unidade_medida }}</span>
+    </article>
+    <article class="stat-card">
+        <strong>Status</strong>
+        <span>{{ item.status_estoque }}</span>
+    </article>
+</section>
+
+<section class="card">
+    <h3>Historico de movimentacoes</h3>
+    <div class="list-stack">
+        {% for movimentacao in movimentacoes %}
+        <div class="list-row static-row">
+            <div>
+                <strong>{{ movimentacao.get_tipo_display }} de {{ movimentacao.quantidade_liquida }} {{ item.unidade_medida }}</strong>
+                <p>
+                    Data: {{ movimentacao.data_movimentacao|date:"d/m/Y" }}
+                    {% if movimentacao.setor %}| Setor: {{ movimentacao.setor }}{% endif %}
+                    {% if movimentacao.quantidade_devolvida %}| Devolvida: {{ movimentacao.quantidade_devolvida }}{% endif %}
+                </p>
+                <p>Valor total: R$ {{ movimentacao.valor_total|floatformat:2 }}</p>
+                <p>{{ movimentacao.observacao|default:"Sem observacao." }}</p>
+            </div>
+            <span>{{ movimentacao.criado_em|date:"d/m/Y H:i" }}</span>
+        </div>
+        {% empty %}
+        <div class="empty-box">Nenhuma movimentacao registrada.</div>
+        {% endfor %}
+    </div>
+</section>
+{% endif %}
+{% endblock %}

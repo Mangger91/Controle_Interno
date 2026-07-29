@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+{% block title %}Movimentar Item{% endblock %}
+{% block page_title %}Movimentar Item{% endblock %}
+
+{% block content %}
+<section class="module-header">
+    <div>
+        <span class="section-kicker">{{ papel_modulo_label }}</span>
+        <h2>Movimentar {{ item.nome }}</h2>
+        <p>Saldo atual: {{ item.quantidade_atual }} {{ item.unidade_medida }}</p>
+    </div>
+    <button type="button" class="btn btn-secondary" onclick="history.back()">Voltar</button>
+</section>
+
+{% if acesso_negado %}
+<div class="alert-banner">
+    Voce nao possui permissao para acessar essa area, contate o administrador.
+</div>
+{% else %}
+<section class="card form-card">
+    <form method="post">
+        {% csrf_token %}
+        <div class="form-grid">
+            {% for field in form %}
+            <div class="{% if field.name == 'observacao' %}field-span{% endif %}">
+                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                {{ field }}
+                {% if field.errors %}
+                <div class="erro">{{ field.errors|join:", " }}</div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+        <div class="form-inline">
+            <button type="submit" class="btn btn-primary">Salvar movimentacao</button>
+            <button type="button" class="btn btn-secondary" onclick="history.back()">Cancelar</button>
+        </div>
+    </form>
+</section>
+{% endif %}
+{% endblock %}

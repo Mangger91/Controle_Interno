@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+
+{% block title %}{{ modulo_titulo }}{% endblock %}
+{% block page_title %}{{ modulo_titulo }}{% endblock %}
+
+{% block content %}
+<section class="module-header">
+    <div>
+        <span class="section-kicker">{{ papel_modulo_label }}</span>
+        <h2>{{ modulo_titulo }}</h2>
+        <p>{{ modulo_descricao }}</p>
+    </div>
+    <div class="hero-actions">
+        {% if not acesso_negado and permite_edicao %}
+        <a href="{% url 'nova_categoria_estoque' modulo_codigo %}" class="btn btn-primary">Nova categoria</a>
+        {% endif %}
+        {% if rota_estoque %}
+        <a href="{% url rota_estoque %}" class="btn btn-secondary">Voltar</a>
+        {% endif %}
+    </div>
+</section>
+
+{% if acesso_negado %}
+<div class="alert-banner">
+    Voce nao possui permissao para acessar essa area, contate o administrador.
+</div>
+{% else %}
+<section class="card">
+    <div class="card-header-simple">
+        <div>
+            <span class="section-kicker">Cadastro de categorias</span>
+            <h3>Categorias do estoque</h3>
+        </div>
+    </div>
+
+    <div class="list-stack">
+        {% for categoria in categorias %}
+        <article class="list-row card-row">
+            <div>
+                <strong>{{ categoria.nome }}</strong>
+                <p>Codigo: {{ categoria.codigo }} | Status: {% if categoria.ativo %}Ativa{% else %}Inativa{% endif %}</p>
+            </div>
+            <div class="hero-actions">
+                {% if permite_edicao %}
+                <a href="{% url 'editar_categoria_estoque' categoria.pk %}" class="btn btn-secondary">Editar</a>
+                {% endif %}
+                {% if permite_exclusao %}
+                <a href="{% url 'excluir_categoria_estoque' categoria.pk %}" class="btn btn-danger">Excluir</a>
+                {% endif %}
+            </div>
+        </article>
+        {% empty %}
+        <div class="empty-box">Nenhuma categoria cadastrada neste estoque.</div>
+        {% endfor %}
+    </div>
+</section>
+{% endif %}
+{% endblock %}

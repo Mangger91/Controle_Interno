@@ -1,0 +1,590 @@
+{% extends "base.html" %}
+
+{% block title %}Agenda Mensal{% endblock %}
+{% block page_title %}Agenda Mensal{% endblock %}
+
+{% block extra_css %}
+<style>
+    .agenda-toolbar {
+        align-items: center;
+        display: flex;
+        gap: 12px;
+        justify-content: space-between;
+        margin-bottom: 14px;
+    }
+
+    .agenda-title {
+        display: grid;
+        gap: 4px;
+    }
+
+    .agenda-title h2 {
+        font-size: 1.72rem;
+        line-height: 1.1;
+        margin: 0;
+    }
+
+    .agenda-title p {
+        color: var(--muted);
+        margin: 0;
+    }
+
+    .agenda-nav,
+    .agenda-filter-actions,
+    .agenda-header-actions {
+        align-items: center;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .agenda-filters {
+        align-items: end;
+        display: grid;
+        gap: 12px;
+        grid-template-columns: minmax(170px, 0.7fr) minmax(240px, 1fr) auto;
+    }
+
+    .filter-note {
+        color: var(--muted);
+        margin: 12px 0 0;
+    }
+
+    .agenda-kpis {
+        display: grid;
+        gap: 10px;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        margin-bottom: 14px;
+    }
+
+    .agenda-kpi {
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        background: var(--surface);
+        padding: 13px;
+        box-shadow: var(--shadow-sm);
+    }
+
+    .agenda-kpi strong {
+        color: var(--muted);
+        display: block;
+        font-size: 0.73rem;
+        font-weight: 800;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+    }
+
+    .agenda-kpi span {
+        display: block;
+        font-size: 1.65rem;
+        font-weight: 800;
+        line-height: 1.15;
+        margin-top: 5px;
+    }
+
+    .calendar-shell {
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        background: var(--surface);
+        box-shadow: var(--shadow-sm);
+        margin-bottom: 16px;
+        overflow-x: auto;
+    }
+
+    .calendar-grid {
+        display: grid;
+        grid-template-columns: repeat(7, minmax(136px, 1fr));
+        min-width: 952px;
+    }
+
+    .calendar-heading {
+        border-bottom: 1px solid var(--border);
+        color: var(--muted);
+        font-size: 0.75rem;
+        font-weight: 800;
+        letter-spacing: 0.04em;
+        padding: 11px 8px;
+        text-align: center;
+        text-transform: uppercase;
+    }
+
+    .calendar-day {
+        border-bottom: 1px solid var(--border);
+        border-right: 1px solid var(--border);
+        color: inherit;
+        display: block;
+        min-height: 148px;
+        padding: 9px;
+        text-decoration: none;
+    }
+
+    .calendar-day:hover {
+        background: var(--surface-tint);
+    }
+
+    .calendar-day.selected {
+        background: #eef5ff;
+        box-shadow: inset 0 0 0 2px var(--accent);
+    }
+
+    .calendar-day:nth-child(7n) {
+        border-right: 0;
+    }
+
+    .calendar-day.outside-month {
+        background: #f8fafc;
+        color: var(--muted);
+    }
+
+    .calendar-day.today {
+        background: #f7fbff;
+        box-shadow: inset 0 0 0 2px rgba(0, 67, 255, 0.18);
+    }
+
+    .calendar-day-top {
+        align-items: center;
+        display: flex;
+        gap: 8px;
+        justify-content: space-between;
+        margin-bottom: 8px;
+    }
+
+    .calendar-day-number {
+        align-items: center;
+        border-radius: 999px;
+        display: inline-flex;
+        font-weight: 800;
+        height: 28px;
+        justify-content: center;
+        min-width: 28px;
+        padding: 0 8px;
+    }
+
+    .today .calendar-day-number {
+        background: var(--accent);
+        color: #ffffff;
+    }
+
+    .calendar-count {
+        border-radius: 999px;
+        background: var(--accent-soft);
+        color: var(--accent-strong);
+        font-size: 0.74rem;
+        font-weight: 800;
+        min-width: 24px;
+        padding: 3px 7px;
+        text-align: center;
+    }
+
+    .calendar-events {
+        display: grid;
+        gap: 6px;
+        max-height: 104px;
+        overflow: auto;
+        padding-right: 2px;
+    }
+
+    .calendar-event {
+        border-left: 3px solid var(--accent);
+        border-radius: 7px;
+        background: #eef5ff;
+        color: #15316c;
+        display: grid;
+        gap: 2px;
+        min-height: 48px;
+        padding: 7px 8px;
+        text-decoration: none;
+    }
+
+    .calendar-event:hover {
+        background: #e3edff;
+    }
+
+    .calendar-event.status-cancelada {
+        border-left-color: var(--danger);
+        background: var(--danger-soft);
+        color: #7f2924;
+    }
+
+    .calendar-event.status-realizada {
+        border-left-color: #0f766e;
+        background: #e7f7f4;
+        color: #115e59;
+    }
+
+    .calendar-event-time {
+        font-size: 0.74rem;
+        font-weight: 800;
+    }
+
+    .calendar-event-title {
+        font-size: 0.83rem;
+        font-weight: 800;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .calendar-event-room {
+        color: currentColor;
+        font-size: 0.74rem;
+        opacity: 0.72;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .agenda-list {
+        display: grid;
+        gap: 10px;
+    }
+
+    .agenda-day-row {
+        align-items: start;
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        background: var(--surface);
+        display: grid;
+        gap: 12px;
+        grid-template-columns: 128px minmax(0, 1fr);
+        padding: 13px;
+    }
+
+    .agenda-date-card {
+        border-radius: var(--radius);
+        background: var(--surface-soft);
+        color: var(--text);
+        display: grid;
+        gap: 2px;
+        padding: 10px;
+        text-align: center;
+    }
+
+    .agenda-date-card strong {
+        font-size: 1.55rem;
+        line-height: 1;
+    }
+
+    .agenda-date-card span {
+        color: var(--muted);
+        font-size: 0.78rem;
+        font-weight: 800;
+        text-transform: uppercase;
+    }
+
+    .agenda-day-events {
+        display: grid;
+        gap: 8px;
+    }
+
+    .agenda-list-event {
+        align-items: center;
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        display: grid;
+        gap: 10px;
+        grid-template-columns: 116px minmax(0, 1fr) auto;
+        min-height: 58px;
+        padding: 10px;
+    }
+
+    .agenda-list-event:hover {
+        border-color: var(--accent);
+        background: var(--surface-tint);
+    }
+
+    .agenda-list-event time {
+        color: var(--accent-strong);
+        font-weight: 800;
+    }
+
+    .agenda-list-event h3 {
+        font-size: 0.95rem;
+        margin: 0 0 3px;
+    }
+
+    .agenda-list-event p {
+        color: var(--muted);
+        margin: 0;
+    }
+
+    .status-pill {
+        border-radius: 999px;
+        background: var(--accent-soft);
+        color: var(--accent-strong);
+        font-size: 0.73rem;
+        font-weight: 800;
+        padding: 5px 9px;
+        white-space: nowrap;
+    }
+
+    .status-pill.status-cancelada {
+        background: var(--danger-soft);
+        color: var(--danger);
+    }
+
+    .status-pill.status-realizada {
+        background: #e7f7f4;
+        color: #115e59;
+    }
+
+    .agenda-selected-day {
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        background: var(--surface);
+        box-shadow: var(--shadow-sm);
+        overflow: hidden;
+    }
+
+    .agenda-selected-header {
+        align-items: center;
+        background: var(--accent);
+        color: #fff;
+        display: flex;
+        gap: 12px;
+        justify-content: space-between;
+        padding: 13px 16px;
+    }
+
+    .agenda-selected-header h3,
+    .agenda-selected-header p {
+        margin: 0;
+    }
+
+    .agenda-selected-header p {
+        opacity: 0.86;
+    }
+
+    .agenda-day-table-wrap {
+        overflow-x: auto;
+    }
+
+    .agenda-day-table {
+        border-collapse: collapse;
+        min-width: 960px;
+        width: 100%;
+    }
+
+    .agenda-day-table th,
+    .agenda-day-table td {
+        border-right: 1px solid var(--border);
+        border-top: 1px solid var(--border);
+        padding: 11px 12px;
+        text-align: left;
+        vertical-align: middle;
+    }
+
+    .agenda-day-table th:last-child,
+    .agenda-day-table td:last-child {
+        border-right: 0;
+    }
+
+    .agenda-day-table th {
+        background: #dce9fb;
+        font-size: 0.75rem;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+    }
+
+    .agenda-day-time,
+    .agenda-day-title-cell {
+        font-weight: 800;
+    }
+
+    .agenda-select-hint {
+        border: 1px dashed var(--border);
+        border-radius: var(--radius);
+        color: var(--muted);
+        padding: 18px;
+        text-align: center;
+    }
+
+    @media (max-width: 820px) {
+        .agenda-toolbar,
+        .agenda-filters,
+        .agenda-day-row,
+        .agenda-list-event {
+            grid-template-columns: 1fr;
+        }
+
+        .agenda-toolbar {
+            align-items: stretch;
+            display: grid;
+        }
+
+        .agenda-nav,
+        .agenda-header-actions {
+            width: 100%;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="agenda-toolbar">
+    <div class="agenda-title">
+        <span class="section-kicker">{{ papel_modulo_label }}</span>
+        <h2>{{ mes_nome }} de {{ ano }}</h2>
+        <p>Visualizacao mensal das reunioes, salas e compromissos do periodo.</p>
+    </div>
+    <div class="agenda-header-actions">
+        <div class="agenda-nav">
+            <a href="{% url 'lista_reunioes_mes' mes_anterior.ano mes_anterior.mes %}{% if query_filtros %}?{{ query_filtros }}{% endif %}" class="btn btn-secondary">Mes anterior</a>
+            <a href="{% url 'home' %}" class="btn btn-secondary">Agenda</a>
+            <a href="{% url 'relatorio_reunioes' %}" class="btn btn-secondary">Relatorio</a>
+            <a href="{% url 'lista_reunioes_mes' proximo_mes.ano proximo_mes.mes %}{% if query_filtros %}?{{ query_filtros }}{% endif %}" class="btn btn-secondary">Proximo mes</a>
+        </div>
+        {% if not acesso_negado and permite_edicao %}
+        <a href="{% url 'nova_reuniao' %}" class="btn btn-primary">Nova reuniao</a>
+        {% endif %}
+    </div>
+</section>
+
+{% if acesso_negado %}
+<div class="alert-banner">
+    Voce nao possui permissao para acessar essa area, contate o administrador.
+</div>
+{% else %}
+<section class="card form-card">
+    <form method="get" class="agenda-filters">
+        <div class="campo">
+            <label for="status">Status</label>
+            <select name="status" id="status" class="form-control">
+                <option value="">Todos</option>
+                {% for valor, rotulo in status_opcoes %}
+                <option value="{{ valor }}" {% if status_filtro == valor %}selected{% endif %}>{{ rotulo }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="campo">
+            <label for="email">E-mail</label>
+            <input
+                type="email"
+                name="email"
+                id="email"
+                class="form-control"
+                value="{{ email_filtro }}"
+                placeholder="ex.: junior@falavinhacontabil.com.br"
+            >
+        </div>
+        <div class="agenda-filter-actions">
+            <button type="submit" class="btn btn-primary">Aplicar</button>
+            {% if status_filtro or email_filtro %}
+            <a href="{% url 'lista_reunioes_mes' ano mes %}" class="btn btn-secondary">Limpar</a>
+            {% endif %}
+        </div>
+    </form>
+    {% if email_filtro %}
+    <p class="filter-note">
+        Mostrando reunioes vinculadas a {{ email_filtro }}. Sem status selecionado, reunioes canceladas ficam fora da disponibilidade.
+    </p>
+    {% endif %}
+</section>
+
+<section class="agenda-kpis">
+    <article class="agenda-kpi">
+        <strong>Total no mes</strong>
+        <span>{{ resumo_agenda.total }}</span>
+    </article>
+    <article class="agenda-kpi">
+        <strong>Agendadas</strong>
+        <span>{{ resumo_agenda.agendadas }}</span>
+    </article>
+    <article class="agenda-kpi">
+        <strong>Dias ocupados</strong>
+        <span>{{ resumo_agenda.dias_com_reuniao }}</span>
+    </article>
+    <article class="agenda-kpi">
+        <strong>Salas usadas</strong>
+        <span>{{ resumo_agenda.salas }}</span>
+    </article>
+</section>
+
+<section class="calendar-shell" aria-label="Calendario mensal">
+    <div class="calendar-grid">
+        <div class="calendar-heading">Dom</div>
+        <div class="calendar-heading">Seg</div>
+        <div class="calendar-heading">Ter</div>
+        <div class="calendar-heading">Qua</div>
+        <div class="calendar-heading">Qui</div>
+        <div class="calendar-heading">Sex</div>
+        <div class="calendar-heading">Sab</div>
+
+        {% for semana in semanas %}
+            {% for dia in semana %}
+            {% if dia.no_mes %}
+            <a href="{% url 'lista_reunioes_mes' ano mes %}?dia={{ dia.data|date:'Y-m-d' }}{% if query_filtros %}&amp;{{ query_filtros }}{% endif %}#agenda-do-dia" class="calendar-day {% if dia.hoje %}today{% endif %} {% if dia.data == dia_selecionado %}selected{% endif %}">
+            {% else %}
+            <a href="{% url 'lista_reunioes_mes' dia.data.year dia.data.month %}?dia={{ dia.data|date:'Y-m-d' }}{% if query_filtros %}&amp;{{ query_filtros }}{% endif %}#agenda-do-dia" class="calendar-day outside-month">
+            {% endif %}
+                <div class="calendar-day-top">
+                    <span class="calendar-day-number">{{ dia.data|date:"j" }}</span>
+                    {% if dia.reunioes %}
+                    <span class="calendar-count">{{ dia.reunioes|length }}</span>
+                    {% endif %}
+                </div>
+
+                {% if dia.reunioes %}
+                <div class="calendar-events">
+                    {% for reuniao in dia.reunioes %}
+                    <span class="calendar-event status-{{ reuniao.status|lower }}">
+                        <span class="calendar-event-time">{{ reuniao.hora_inicio|time:"H:i" }} - {{ reuniao.hora_fim|time:"H:i" }}</span>
+                        <span class="calendar-event-title">{{ reuniao.titulo }}</span>
+                        <span class="calendar-event-room">{{ reuniao.sala.nome }}</span>
+                    </span>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </a>
+            {% endfor %}
+        {% endfor %}
+    </div>
+</section>
+
+{% if dia_selecionado %}
+<section class="agenda-selected-day" id="agenda-do-dia">
+    <div class="agenda-selected-header">
+        <div>
+            <h3>{{ dia_selecionado|date:"l - d/m/Y" }}</h3>
+            <p>Agenda exclusiva do dia selecionado</p>
+        </div>
+        <strong>{{ reunioes_dia|length }} {% if reunioes_dia|length == 1 %}reuniao{% else %}reunioes{% endif %}</strong>
+    </div>
+    {% if reunioes_dia %}
+    <div class="agenda-day-table-wrap">
+        <table class="agenda-day-table">
+            <thead>
+                <tr>
+                    <th>Horario</th>
+                    <th>Reuniao</th>
+                    <th>Local</th>
+                    <th>Responsavel</th>
+                    <th>Observacoes</th>
+                    <th>Status</th>
+                    <th>Acoes</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for reuniao in reunioes_dia %}
+                <tr>
+                    <td class="agenda-day-time">{{ reuniao.hora_inicio|time:"H:i" }} - {{ reuniao.hora_fim|time:"H:i" }}</td>
+                    <td class="agenda-day-title-cell">{{ reuniao.titulo }}</td>
+                    <td>{{ reuniao.sala.nome }}</td>
+                    <td>{{ reuniao.nome_organizador }}</td>
+                    <td>{{ reuniao.descricao|default:"-" }}</td>
+                    <td><span class="status-pill status-{{ reuniao.status|lower }}">{{ reuniao.get_status_display }}</span></td>
+                    <td><a href="{% url 'detalhe_reuniao' reuniao.pk %}" class="btn btn-secondary">Detalhes</a></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="empty-box">Nenhuma reuniao agendada para este dia.</div>
+    {% endif %}
+</section>
+{% else %}
+<div class="agenda-select-hint" id="agenda-do-dia">Clique em uma data do calendario para abrir a agenda daquele dia.</div>
+{% endif %}
+{% endif %}
+{% endblock %}

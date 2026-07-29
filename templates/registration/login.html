@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Entrar{% endblock %}
+
+{% block body %}
+<div class="login-layout">
+    <section class="login-panel login-panel-brand">
+        <img src="{% static 'img/falavinha-logo-branco.webp' %}" alt="Falavinha Inteligencia Contabil" class="login-brand-logo">
+        <span class="brand-kicker">Acesso seguro</span>
+        <h1>Falavinha Inteligencia Contabil</h1>
+        <p>
+            Entre com seu e-mail para acessar a plataforma. O menu lateral respeita as
+            permissoes do seu perfil e libera apenas os modulos autorizados.
+        </p>
+    </section>
+
+    <section class="login-panel login-panel-form">
+        <span class="brand-kicker">Entrar</span>
+        <h2>Acesse sua conta</h2>
+        <p class="login-help">Use seu e-mail corporativo e senha cadastrada no sistema.</p>
+
+        {% if form.errors %}
+        <div class="erro">E-mail ou senha invalidos. Tente novamente.</div>
+        {% endif %}
+
+        <form method="post">
+            {% csrf_token %}
+            <div class="campo">
+                <label for="id_username">E-mail</label>
+                {{ form.username }}
+            </div>
+            <div class="campo">
+                <label for="id_password">Senha</label>
+                {{ form.password }}
+            </div>
+            <button type="submit" class="btn btn-primary btn-block">Entrar</button>
+        </form>
+        <p class="login-help">
+            <a href="{% url 'password_reset' %}" class="top-link">Recuperar senha</a>
+        </p>
+    </section>
+</div>
+{% endblock %}

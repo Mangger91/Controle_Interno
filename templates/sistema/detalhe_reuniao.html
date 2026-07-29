@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+
+{% block title %}Detalhe da Reuniao{% endblock %}
+{% block page_title %}Detalhe da Reuniao{% endblock %}
+
+{% block content %}
+{% if acesso_negado %}
+<div class="alert-banner">
+    Voce nao possui permissao para acessar essa area, contate o administrador.
+</div>
+{% endif %}
+
+<section class="module-header">
+    <div>
+        <span class="section-kicker">{{ reuniao.get_status_display }}</span>
+        <h2>{{ reuniao.titulo }}</h2>
+        <p>{{ reuniao.descricao|default:"Sem descricao informada." }}</p>
+    </div>
+    <div class="hero-actions">
+        <a href="{% url 'home' %}" class="btn btn-secondary">Voltar para agenda</a>
+        {% if usuario_pode_gerenciar %}
+        <a href="{% url 'editar_reuniao' reuniao.pk %}" class="btn btn-secondary">Editar</a>
+        <a href="{% url 'cancelar_reuniao' reuniao.pk %}" class="btn btn-danger">Cancelar</a>
+        {% endif %}
+    </div>
+</section>
+
+<section class="detail-grid">
+    <article class="card">
+        <h3>Dados da reuniao</h3>
+        <div class="meta-grid">
+            <div><strong>Data</strong><span>{{ reuniao.data|date:"d/m/Y" }}</span></div>
+            <div><strong>Horario</strong><span>{{ reuniao.hora_inicio|time:"H:i" }} as {{ reuniao.hora_fim|time:"H:i" }}</span></div>
+            <div><strong>Sala</strong><span>{{ reuniao.sala.nome }}</span></div>
+            <div><strong>Organizador</strong><span>{{ reuniao.nome_organizador }}</span></div>
+        </div>
+    </article>
+
+    <article class="card">
+        <h3>Participantes</h3>
+        {% if emails_participantes %}
+        <div class="list-stack">
+            {% for participante in emails_participantes %}
+            <div class="list-row static-row">
+                <div>
+                    <strong>{{ participante.nome }}</strong>
+                    <p>{{ participante.email|default:"Sem e-mail" }}{% if participante.whatsapp %} | WhatsApp {{ participante.whatsapp }}{% endif %}</p>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-box">Nenhum participante informado.</div>
+        {% endif %}
+    </article>
+</section>
+
+{% if usuario_pode_gerenciar %}
+<section class="card">
+    <div class="hero-actions">
+        <a href="{% url 'reenviar_email_reuniao' reuniao.pk %}" class="btn btn-primary">Reenviar aviso</a>
+    </div>
+</section>
+{% endif %}
+{% endblock %}

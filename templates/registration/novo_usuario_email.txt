@@ -1,0 +1,8 @@
+Ola,
+
+Sua conta foi criada no Sistema Corporativo.
+
+Para definir sua senha de acesso, use este link:
+{{ protocol }}://{{ domain }}{% url 'password_reset_confirm' uidb64=uid token=token %}
+
+Depois disso, faca login com seu e-mail cadastrado.

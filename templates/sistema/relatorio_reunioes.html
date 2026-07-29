@@ -1,0 +1,168 @@
+{% extends "base.html" %}
+
+{% block title %}Relatorio de Reunioes{% endblock %}
+{% block page_title %}Relatorio de Reunioes{% endblock %}
+
+{% block extra_css %}
+<style>
+    .meeting-report-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .meeting-report-table-wrap {
+        overflow-x: auto;
+    }
+
+    .meeting-report-table {
+        border-collapse: collapse;
+        min-width: 920px;
+        width: 100%;
+    }
+
+    .meeting-report-table th,
+    .meeting-report-table td {
+        border-bottom: 1px solid var(--border);
+        padding: 11px 12px;
+        text-align: left;
+        vertical-align: top;
+    }
+
+    .meeting-report-table th {
+        color: var(--muted);
+        font-size: 0.75rem;
+        font-weight: 800;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+    }
+
+    .meeting-report-table .muted {
+        color: var(--muted);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="module-header">
+    <div>
+        <span class="section-kicker">{{ papel_modulo_label }}</span>
+        <h2>{{ modulo_titulo }}</h2>
+        <p>{{ modulo_descricao }}</p>
+    </div>
+    <div class="meeting-report-actions">
+        <button type="button" class="btn btn-secondary" onclick="history.back()">Voltar</button>
+        <a href="{% url 'home' %}" class="btn btn-secondary">Agenda</a>
+    </div>
+</section>
+
+{% if acesso_negado %}
+<div class="alert-banner">
+    Voce nao possui permissao para acessar essa area, contate o administrador.
+</div>
+{% else %}
+<section class="card filter-panel">
+    <form method="get">
+        <div class="form-grid">
+            <div>
+                <label for="{{ form.data_inicio.id_for_label }}">{{ form.data_inicio.label }}</label>
+                {{ form.data_inicio }}
+                {% if form.data_inicio.errors %}<div class="erro">{{ form.data_inicio.errors|join:", " }}</div>{% endif %}
+            </div>
+            <div>
+                <label for="{{ form.data_fim.id_for_label }}">{{ form.data_fim.label }}</label>
+                {{ form.data_fim }}
+                {% if form.data_fim.errors %}<div class="erro">{{ form.data_fim.errors|join:", " }}</div>{% endif %}
+            </div>
+            <div>
+                <label for="{{ form.status.id_for_label }}">{{ form.status.label }}</label>
+                {{ form.status }}
+                {% if form.status.errors %}<div class="erro">{{ form.status.errors|join:", " }}</div>{% endif %}
+            </div>
+            <div>
+                <label for="{{ form.pessoa.id_for_label }}">{{ form.pessoa.label }}</label>
+                {{ form.pessoa }}
+                {% if form.pessoa.errors %}<div class="erro">{{ form.pessoa.errors|join:", " }}</div>{% endif %}
+            </div>
+        </div>
+        <div class="filter-actions">
+            <button type="submit" class="btn btn-primary">Gerar relatorio</button>
+            <button type="submit" name="export" value="csv" class="btn btn-secondary">Exportar CSV</button>
+            <a href="{{ request.path }}" class="btn btn-secondary">Limpar</a>
+        </div>
+    </form>
+</section>
+
+{% if relatorio_valido %}
+<section class="stats-grid">
+    <article class="stat-card">
+        <strong>Total</strong>
+        <span>{{ resumo.total }}</span>
+    </article>
+    <article class="stat-card">
+        <strong>Agendadas</strong>
+        <span>{{ resumo.agendadas }}</span>
+    </article>
+    <article class="stat-card">
+        <strong>Concluidas</strong>
+        <span>{{ resumo.realizadas }}</span>
+    </article>
+    <article class="stat-card">
+        <strong>Canceladas</strong>
+        <span>{{ resumo.canceladas }}</span>
+    </article>
+</section>
+
+<section class="card">
+    <div class="card-header-simple">
+        <div>
+            <h3>Reunioes encontradas</h3>
+            {% if data_inicio and data_fim %}
+            <p>{{ data_inicio|date:"d/m/Y" }} a {{ data_fim|date:"d/m/Y" }}</p>
+            {% endif %}
+        </div>
+    </div>
+    {% if reunioes %}
+    <div class="meeting-report-table-wrap">
+        <table class="meeting-report-table">
+            <thead>
+                <tr>
+                    <th>Data</th>
+                    <th>Horario</th>
+                    <th>Reuniao</th>
+                    <th>Sala</th>
+                    <th>Status</th>
+                    <th>Organizador</th>
+                    <th>Participantes</th>
+                    <th>Acoes</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for reuniao in reunioes %}
+                <tr>
+                    <td>{{ reuniao.data|date:"d/m/Y" }}</td>
+                    <td>{{ reuniao.hora_inicio|time:"H:i" }} - {{ reuniao.hora_fim|time:"H:i" }}</td>
+                    <td><strong>{{ reuniao.titulo }}</strong></td>
+                    <td>{{ reuniao.sala.nome }}</td>
+                    <td>{{ reuniao.get_status_display }}</td>
+                    <td>{{ reuniao.nome_organizador }}</td>
+                    <td>
+                        {% for participante in reuniao.participantes.all %}
+                        <div>{{ participante.nome }} <span class="muted">{{ participante.email|default:"" }}</span></div>
+                        {% empty %}
+                        <span class="muted">Nenhum participante</span>
+                        {% endfor %}
+                    </td>
+                    <td><a href="{% url 'detalhe_reuniao' reuniao.pk %}" class="btn btn-secondary">Abrir</a></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="empty-box">Nenhuma reuniao encontrada para os filtros selecionados.</div>
+    {% endif %}
+</section>
+{% endif %}
+{% endif %}
+{% endblock %}

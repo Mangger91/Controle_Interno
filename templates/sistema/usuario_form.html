@@ -1,0 +1,179 @@
+{% extends "base.html" %}
+
+{% block title %}{% if criacao %}Novo Usuario{% else %}Editar Usuario{% endif %}{% endblock %}
+{% block page_title %}{% if criacao %}Novo Usuario{% else %}Editar Usuario{% endif %}{% endblock %}
+
+{% block content %}
+<section class="module-header">
+    <div>
+        <span class="section-kicker">{{ papel_modulo_label }}</span>
+        <h2>{{ modulo_titulo }}</h2>
+        <p>{{ modulo_descricao }}</p>
+    </div>
+    <a href="{% url 'usuarios_lista' %}" class="btn btn-secondary">Voltar</a>
+</section>
+
+{% if acesso_negado %}
+<div class="alert-banner">
+    Voce nao possui permissao para acessar essa area, contate o administrador.
+</div>
+{% else %}
+<section class="card form-card">
+    <form method="post">
+        {% csrf_token %}
+        {% if form.non_field_errors %}
+        <div class="erro">{{ form.non_field_errors|join:", " }}</div>
+        {% endif %}
+
+        <div class="form-section">
+            <div class="section-line">
+                <div>
+                    <h3>Dados do usuario</h3>
+                    <p>Identificacao e situacao de acesso.</p>
+                </div>
+            </div>
+            <div class="form-grid">
+                {% for field in form %}
+                {% if field.name == 'first_name' or field.name == 'last_name' or field.name == 'email' or field.name == 'is_active' %}
+                <div>
+                    <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                    {{ field }}
+                    {% if field.help_text %}
+                    <small>{{ field.help_text }}</small>
+                    {% endif %}
+                    {% if field.errors %}
+                    <div class="erro">{{ field.errors|join:", " }}</div>
+                    {% endif %}
+                </div>
+                {% endif %}
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="form-section">
+            <div class="section-line">
+                <div>
+                    <h3>Vinculo interno</h3>
+                    <p>Setor, funcao e nivel de perfil do colaborador.</p>
+                </div>
+            </div>
+            <div class="form-grid">
+                {% for field in form %}
+                {% if field.name == 'setor' or field.name == 'funcao' or field.name == 'cargo' or field.name == 'nivel_perfil' or field.name == 'receber_email_notificacao' %}
+                <div>
+                    <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                    {{ field }}
+                    {% if field.help_text %}
+                    <small>{{ field.help_text }}</small>
+                    {% endif %}
+                    {% if field.errors %}
+                    <div class="erro">{{ field.errors|join:", " }}</div>
+                    {% endif %}
+                </div>
+                {% endif %}
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="form-section">
+            <div class="section-line">
+                <div>
+                    <h3>Permissoes por modulo</h3>
+                    <p>Controle o acesso operacional em cada area do sistema.</p>
+                </div>
+            </div>
+            <div class="form-grid">
+                {% for field in form %}
+                {% if 'papel_' in field.name %}
+                <div>
+                    <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                    {{ field }}
+                    {% if field.errors %}
+                    <div class="erro">{{ field.errors|join:", " }}</div>
+                    {% endif %}
+                </div>
+                {% endif %}
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="form-section">
+            <div class="section-line">
+                <div>
+                    <h3>Seguranca</h3>
+                    <p>Convite e redefinicao de senha.</p>
+                </div>
+            </div>
+            <div class="form-grid">
+                {% for field in form %}
+                {% if field.name == 'enviar_convite' or field.name == 'redefinir_senha' %}
+                <div>
+                    <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                    {{ field }}
+                    {% if field.errors %}
+                    <div class="erro">{{ field.errors|join:", " }}</div>
+                    {% endif %}
+                </div>
+                {% endif %}
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="is-hidden">
+            {% for field in form.hidden_fields %}
+                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                {{ field }}
+            {% endfor %}
+        </div>
+
+        <div class="form-inline">
+            <button type="submit" class="btn btn-primary">Salvar</button>
+            <a href="{% url 'usuarios_lista' %}" class="btn btn-secondary">Cancelar</a>
+        </div>
+    </form>
+</section>
+
+{{ funcoes_por_setor|json_script:"funcoes-por-setor" }}
+<script>
+    (function () {
+        const setor = document.getElementById("id_setor");
+        const funcao = document.getElementById("id_funcao");
+        const dados = document.getElementById("funcoes-por-setor");
+
+        if (!setor || !funcao || !dados) {
+            return;
+        }
+
+        const funcoesPorSetor = JSON.parse(dados.textContent);
+        const valorAtual = funcao.value;
+
+        function atualizarFuncoes(manterValorAtual) {
+            const opcoes = funcoesPorSetor[setor.value] || [];
+            const valorSelecionado = manterValorAtual ? (funcao.value || valorAtual) : "";
+            funcao.innerHTML = "";
+
+            const opcaoVazia = document.createElement("option");
+            opcaoVazia.value = "";
+            opcaoVazia.textContent = "Selecione";
+            funcao.appendChild(opcaoVazia);
+
+            opcoes.forEach(function (opcao) {
+                const elemento = document.createElement("option");
+                elemento.value = opcao.value;
+                elemento.textContent = opcao.label;
+                if (opcao.value === valorSelecionado) {
+                    elemento.selected = true;
+                }
+                funcao.appendChild(elemento);
+            });
+        }
+
+        setor.addEventListener("change", function () {
+            funcao.value = "";
+            atualizarFuncoes(false);
+        });
+        atualizarFuncoes(true);
+    })();
+</script>
+{% endif %}
+{% endblock %}

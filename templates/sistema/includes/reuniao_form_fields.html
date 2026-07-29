@@ -1,0 +1,422 @@
+<style>
+    .participant-picker {
+        display: grid;
+        gap: 14px;
+    }
+
+    .participant-search-row {
+        position: relative;
+        max-width: 620px;
+    }
+
+    .participant-search-input {
+        width: 100%;
+    }
+
+    .participant-results {
+        position: absolute;
+        z-index: 20;
+        top: calc(100% + 6px);
+        left: 0;
+        right: 0;
+        display: none;
+        max-height: 260px;
+        overflow-y: auto;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        background: #fff;
+        box-shadow: 0 12px 26px rgba(15, 23, 42, 0.16);
+    }
+
+    .participant-results.is-open {
+        display: block;
+    }
+
+    .participant-result {
+        width: 100%;
+        border: 0;
+        border-bottom: 1px solid var(--border);
+        background: transparent;
+        color: var(--text);
+        cursor: pointer;
+        padding: 11px 13px;
+        text-align: left;
+    }
+
+    .participant-result:last-child {
+        border-bottom: 0;
+    }
+
+    .participant-result strong,
+    .participant-chip strong {
+        display: block;
+    }
+
+    .participant-result span,
+    .participant-chip span {
+        color: var(--muted);
+        font-size: 0.88rem;
+    }
+
+    .participant-empty {
+        color: var(--muted);
+        padding: 12px 13px;
+    }
+
+    .participant-selected-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+
+    .participant-count {
+        color: var(--muted);
+        font-size: 0.92rem;
+    }
+
+    .participant-chip-list {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        min-height: 44px;
+        padding: 10px;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        background: #f8fafc;
+    }
+
+    .participant-email-summary {
+        max-width: 620px;
+    }
+
+    .participant-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        max-width: 360px;
+        border: 1px solid var(--border-strong);
+        border-radius: 8px;
+        background: #fff;
+        padding: 8px 10px;
+    }
+
+    .participant-chip-text {
+        min-width: 0;
+    }
+
+    .participant-chip span {
+        display: block;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .participant-remove {
+        width: 28px;
+        height: 28px;
+        border: 1px solid var(--border);
+        border-radius: 999px;
+        background: #fff;
+        color: #991b1b;
+        cursor: pointer;
+        font-weight: 800;
+        line-height: 1;
+    }
+
+    .participant-hidden-fields {
+        display: none;
+    }
+</style>
+
+<div class="form-grid">
+    <div>
+        <label for="{{ form.titulo.id_for_label }}">{{ form.titulo.label }}</label>
+        {{ form.titulo }}
+        {% if form.titulo.errors %}<div class="erro">{{ form.titulo.errors|join:", " }}</div>{% endif %}
+    </div>
+    <div>
+        <label for="{{ form.sala.id_for_label }}">{{ form.sala.label }}</label>
+        {{ form.sala }}
+        {% if form.sala.errors %}<div class="erro">{{ form.sala.errors|join:", " }}</div>{% endif %}
+    </div>
+    <div>
+        <label for="{{ form.data.id_for_label }}">{{ form.data.label }}</label>
+        {{ form.data }}
+        {% if form.data.errors %}<div class="erro">{{ form.data.errors|join:", " }}</div>{% endif %}
+    </div>
+    <div>
+        <label for="{{ form.hora_inicio.id_for_label }}">{{ form.hora_inicio.label }}</label>
+        {{ form.hora_inicio }}
+        {% if form.hora_inicio.errors %}<div class="erro">{{ form.hora_inicio.errors|join:", " }}</div>{% endif %}
+    </div>
+    <div>
+        <label for="{{ form.hora_fim.id_for_label }}">{{ form.hora_fim.label }}</label>
+        {{ form.hora_fim }}
+        {% if form.hora_fim.errors %}<div class="erro">{{ form.hora_fim.errors|join:", " }}</div>{% endif %}
+    </div>
+    <div>
+        <label for="{{ form.status.id_for_label }}">{{ form.status.label }}</label>
+        {{ form.status }}
+        {% if form.status.errors %}<div class="erro">{{ form.status.errors|join:", " }}</div>{% endif %}
+    </div>
+    <div class="field-span">
+        <label for="{{ form.descricao.id_for_label }}">{{ form.descricao.label }}</label>
+        {{ form.descricao }}
+        {% if form.descricao.errors %}<div class="erro">{{ form.descricao.errors|join:", " }}</div>{% endif %}
+    </div>
+</div>
+
+<section class="form-section">
+    <div class="section-line">
+        <div>
+            <h3>Participantes</h3>
+            <p>Busque por nome ou e-mail e adicione somente quem participara da reuniao.</p>
+        </div>
+        <button type="button" class="btn btn-secondary" data-toggle-new-participant>Adicionar participante</button>
+    </div>
+
+    <div class="participant-picker" data-participant-picker data-search-url="{% url 'buscar_participantes' %}">
+        <div class="participant-search-row">
+            <input
+                type="search"
+                class="form-control participant-search-input"
+                data-participant-search
+                placeholder="Clique ou digite nome/e-mail do participante"
+                autocomplete="off"
+            >
+            <div class="participant-results" data-participant-results></div>
+        </div>
+
+        <div class="participant-email-summary">
+            <label for="participantes-email-resumo">E-mails selecionados</label>
+            <input
+                type="text"
+                id="participantes-email-resumo"
+                class="form-control"
+                data-participant-email-summary
+                placeholder="email@empresa.com.br; proximo@empresa.com.br;"
+                readonly
+            >
+        </div>
+
+        <div class="participant-selected-header">
+            <strong>Selecionados</strong>
+            <span class="participant-count" data-participant-count>Nenhum participante selecionado</span>
+        </div>
+
+        <div class="participant-chip-list" data-participant-selected>
+            <div class="participant-empty" data-participant-empty>Nenhum participante selecionado.</div>
+        </div>
+
+        <div class="participant-hidden-fields" data-participant-hidden></div>
+    </div>
+    {% if form.participantes.errors %}<div class="erro">{{ form.participantes.errors|join:", " }}</div>{% endif %}
+
+    <div class="new-participant-panel {% if not form.novo_participante_nome.errors and not form.novo_participante_email.errors %}is-hidden{% endif %}" data-new-participant-panel>
+        <div>
+            <label for="{{ form.novo_participante_nome.id_for_label }}">{{ form.novo_participante_nome.label }}</label>
+            {{ form.novo_participante_nome }}
+            {% if form.novo_participante_nome.errors %}<div class="erro">{{ form.novo_participante_nome.errors|join:", " }}</div>{% endif %}
+        </div>
+        <div>
+            <label for="{{ form.novo_participante_email.id_for_label }}">{{ form.novo_participante_email.label }}</label>
+            {{ form.novo_participante_email }}
+            {% if form.novo_participante_email.errors %}<div class="erro">{{ form.novo_participante_email.errors|join:", " }}</div>{% endif %}
+        </div>
+        <div>
+            <label for="{{ form.novo_participante_whatsapp.id_for_label }}">{{ form.novo_participante_whatsapp.label }}</label>
+            {{ form.novo_participante_whatsapp }}
+            {% if form.novo_participante_whatsapp.errors %}<div class="erro">{{ form.novo_participante_whatsapp.errors|join:", " }}</div>{% endif %}
+        </div>
+    </div>
+</section>
+
+{{ participantes_selecionados|json_script:"participantes-selecionados-data" }}
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const picker = document.querySelector("[data-participant-picker]");
+    const search = document.querySelector("[data-participant-search]");
+    const results = document.querySelector("[data-participant-results]");
+    const selectedList = document.querySelector("[data-participant-selected]");
+    const hiddenFields = document.querySelector("[data-participant-hidden]");
+    const emptyState = document.querySelector("[data-participant-empty]");
+    const countLabel = document.querySelector("[data-participant-count]");
+    const emailSummary = document.querySelector("[data-participant-email-summary]");
+    const toggle = document.querySelector("[data-toggle-new-participant]");
+    const panel = document.querySelector("[data-new-participant-panel]");
+    const initialData = document.getElementById("participantes-selecionados-data");
+    const selected = new Map();
+    let searchTimer = null;
+
+    function closeResults() {
+        if (results) {
+            results.classList.remove("is-open");
+            results.innerHTML = "";
+        }
+    }
+
+    function renderSelected() {
+        if (!selectedList || !hiddenFields || !countLabel || !emptyState) return;
+
+        selectedList.querySelectorAll("[data-participant-chip]").forEach(function (chip) {
+            chip.remove();
+        });
+        hiddenFields.innerHTML = "";
+
+        const participants = Array.from(selected.values());
+        const emails = participants.map(function (participant) {
+            return participant.email;
+        }).filter(Boolean);
+
+        if (emailSummary) {
+            emailSummary.value = emails.length ? emails.join("; ") + ";" : "";
+        }
+
+        emptyState.hidden = participants.length > 0;
+        countLabel.textContent = participants.length
+            ? participants.length + " participante" + (participants.length > 1 ? "s" : "") + " selecionado" + (participants.length > 1 ? "s" : "")
+            : "Nenhum participante selecionado";
+
+        participants.forEach(function (participant) {
+            const input = document.createElement("input");
+            input.type = "hidden";
+            input.name = "participantes";
+            input.value = participant.id;
+            hiddenFields.appendChild(input);
+
+            const chip = document.createElement("div");
+            chip.className = "participant-chip";
+            chip.dataset.participantChip = participant.id;
+            chip.innerHTML = `
+                <div class="participant-chip-text">
+                    <strong></strong>
+                    <span></span>
+                </div>
+                <button type="button" class="participant-remove" aria-label="Remover participante">x</button>
+            `;
+            chip.querySelector("strong").textContent = participant.nome;
+            chip.querySelector("span").textContent = [
+                participant.email || "Sem e-mail",
+                participant.whatsapp ? "WhatsApp " + participant.whatsapp : ""
+            ].filter(Boolean).join(" | ");
+            chip.querySelector("button").addEventListener("click", function () {
+                selected.delete(String(participant.id));
+                renderSelected();
+            });
+            selectedList.appendChild(chip);
+        });
+    }
+
+    function addParticipant(participant) {
+        selected.set(String(participant.id), participant);
+        renderSelected();
+        if (search) {
+            search.value = "";
+            search.focus();
+        }
+        closeResults();
+    }
+
+    function renderResults(participants, term) {
+        if (!results) return;
+
+        results.innerHTML = "";
+        const available = participants.filter(function (participant) {
+            return !selected.has(String(participant.id));
+        });
+
+        if (!available.length) {
+            const empty = document.createElement("div");
+            empty.className = "participant-empty";
+            empty.textContent = term ? "Nenhum participante encontrado." : "Nenhum e-mail salvo.";
+            results.appendChild(empty);
+            results.classList.add("is-open");
+            return;
+        }
+
+        available.forEach(function (participant) {
+            const button = document.createElement("button");
+            button.type = "button";
+            button.className = "participant-result";
+            button.innerHTML = "<strong></strong><span></span>";
+            button.querySelector("strong").textContent = participant.nome;
+            button.querySelector("span").textContent = participant.email || "Sem e-mail";
+            button.addEventListener("click", function () {
+                addParticipant(participant);
+            });
+            results.appendChild(button);
+        });
+        results.classList.add("is-open");
+    }
+
+    async function searchParticipants(term) {
+        if (!picker) {
+            closeResults();
+            return;
+        }
+
+        const url = new URL(picker.dataset.searchUrl, window.location.origin);
+        if (term) {
+            url.searchParams.set("q", term);
+        }
+
+        try {
+            const response = await fetch(url);
+            const data = await response.json();
+            renderResults(data.resultados || [], term);
+        } catch (error) {
+            renderResults([], term);
+        }
+    }
+
+    if (initialData) {
+        try {
+            JSON.parse(initialData.textContent).forEach(function (participant) {
+                selected.set(String(participant.id), participant);
+            });
+        } catch (error) {
+            selected.clear();
+        }
+        renderSelected();
+    }
+
+    if (search) {
+        search.addEventListener("input", function () {
+            const term = search.value.trim();
+            window.clearTimeout(searchTimer);
+            searchTimer = window.setTimeout(function () {
+                searchParticipants(term);
+            }, 220);
+        });
+
+        search.addEventListener("focus", function () {
+            searchParticipants(search.value.trim());
+        });
+
+        search.addEventListener("keydown", function (event) {
+            if (event.key === "Escape") {
+                closeResults();
+            }
+        });
+    }
+
+    document.addEventListener("click", function (event) {
+        if (picker && !picker.contains(event.target)) {
+            closeResults();
+        }
+    });
+
+    if (selectedList) {
+        selectedList.title = "Participantes selecionados";
+    }
+
+    if (toggle && panel) {
+        toggle.addEventListener("click", function () {
+            panel.classList.toggle("is-hidden");
+        });
+    }
+});
+</script>

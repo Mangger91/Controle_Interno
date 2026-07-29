@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+
+{% block title %}Notificacoes{% endblock %}
+{% block page_title %}Notificacoes{% endblock %}
+
+{% block content %}
+<section class="module-header">
+    <div>
+        <span class="section-kicker">Central</span>
+        <h2>{{ modulo_titulo }}</h2>
+        <p>{{ modulo_descricao }}</p>
+    </div>
+</section>
+
+<section class="card">
+    {% if notificacoes %}
+    <div class="list-stack">
+        {% for notificacao in notificacoes %}
+        <a href="{% url 'abrir_notificacao' notificacao.pk %}" class="list-row {% if not notificacao.lida %}unread-row{% endif %}">
+            <div>
+                <strong>{{ notificacao.titulo }}</strong>
+                <p>{{ notificacao.mensagem }}</p>
+            </div>
+            <span>{{ notificacao.criada_em|date:"d/m/Y H:i" }}</span>
+        </a>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-box">Nenhuma notificacao encontrada.</div>
+    {% endif %}
+</section>
+{% endblock %}

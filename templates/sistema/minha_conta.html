@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+
+{% block title %}Minha Conta{% endblock %}
+{% block page_title %}Minha Conta{% endblock %}
+
+{% block content %}
+<section class="module-header">
+    <div>
+        <span class="section-kicker">Perfil</span>
+        <h2>{{ modulo_titulo }}</h2>
+        <p>{{ modulo_descricao }}</p>
+    </div>
+</section>
+
+<section class="card form-card">
+    <form method="post">
+        {% csrf_token %}
+        <div class="form-grid">
+            {% for field in usuario_form %}
+            <div>
+                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                {{ field }}
+                {% if field.errors %}
+                <div class="erro">{{ field.errors|join:", " }}</div>
+                {% endif %}
+            </div>
+            {% endfor %}
+            {% for field in perfil_form %}
+            <div>
+                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                {{ field }}
+                {% if field.errors %}
+                <div class="erro">{{ field.errors|join:", " }}</div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+        <div class="form-inline">
+            <button type="submit" class="btn btn-primary">Salvar alteracoes</button>
+            <a href="{% url 'password_change' %}" class="btn btn-secondary">Alterar senha</a>
+        </div>
+    </form>
+</section>
+{% endblock %}

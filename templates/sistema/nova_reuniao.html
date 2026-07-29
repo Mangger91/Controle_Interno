@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{% block title %}Nova Reuniao{% endblock %}
+{% block page_title %}Nova Reuniao{% endblock %}
+
+{% block content %}
+<section class="module-header">
+    <div>
+        <span class="section-kicker">{{ papel_modulo_label }}</span>
+        <h2>Criar reuniao</h2>
+        <p>Ao salvar, os participantes vinculados recebem notificacao interna e e-mail de convite.</p>
+    </div>
+    <a href="{% url 'home' %}" class="btn btn-secondary">Voltar</a>
+</section>
+
+{% if acesso_negado %}
+<div class="alert-banner">
+    Voce nao possui permissao para acessar essa area, contate o administrador.
+</div>
+{% else %}
+<section class="card form-card">
+    <form method="post">
+        {% csrf_token %}
+        {% include "sistema/includes/reuniao_form_fields.html" %}
+        <button type="submit" class="btn btn-primary">Salvar reuniao</button>
+    </form>
+</section>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,362 @@
+{% extends "base.html" %}
+
+{% block title %}{{ modulo_titulo }}{% endblock %}
+{% block page_title %}{{ modulo_titulo }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .report-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .report-filter-form {
+        display: grid;
+        gap: 12px;
+    }
+
+    .report-table-wrap {
+        width: 100%;
+        overflow-x: auto;
+    }
+
+    .report-table {
+        width: 100%;
+        border-collapse: collapse;
+        min-width: 760px;
+    }
+
+    .report-table th,
+    .report-table td {
+        padding: 10px 9px;
+        border-bottom: 1px solid var(--border);
+        text-align: left;
+        vertical-align: top;
+    }
+
+    .report-table th {
+        color: var(--muted);
+        font-size: 0.76rem;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        white-space: nowrap;
+    }
+
+    .report-table td:last-child,
+    .report-table th:last-child {
+        text-align: right;
+    }
+
+    .report-table .text-right {
+        text-align: right;
+    }
+
+    .report-table .muted {
+        color: var(--muted);
+    }
+
+    .report-print-button {
+        border-color: var(--border-strong);
+    }
+
+    @media print {
+        body {
+            background: #ffffff;
+        }
+
+        .sidebar,
+        .topbar,
+        .filter-panel,
+        .report-actions,
+        .mensagens {
+            display: none !important;
+        }
+
+        .app-shell {
+            display: block;
+        }
+
+        .content-shell {
+            width: 100%;
+            padding: 0;
+        }
+
+        .card,
+        .stat-card {
+            break-inside: avoid;
+            box-shadow: none;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="module-header">
+    <div>
+        <span class="section-kicker">{{ papel_modulo_label }}</span>
+        <h2>{{ modulo_titulo }}</h2>
+        <p>{{ modulo_descricao }}</p>
+    </div>
+    <div class="report-actions">
+        <button type="button" class="btn btn-secondary report-print-button" onclick="window.print()">Imprimir</button>
+        {% if rota_estoque %}
+        <a href="{% url rota_estoque %}" class="btn btn-secondary">Voltar</a>
+        {% endif %}
+    </div>
+</section>
+
+{% if acesso_negado %}
+<div class="alert-banner">
+    Voce nao possui permissao para acessar essa area, contate o administrador.
+</div>
+{% else %}
+<section class="card filter-panel">
+    <form method="get" class="report-filter-form" id="relatorio-estoque-form">
+        <div class="form-grid">
+            <div>
+                <label for="{{ form.periodo.id_for_label }}">{{ form.periodo.label }}</label>
+                {{ form.periodo }}
+                {% if form.periodo.errors %}<div class="erro">{{ form.periodo.errors|join:", " }}</div>{% endif %}
+            </div>
+            <div class="period-field period-month">
+                <label for="{{ form.mes.id_for_label }}">{{ form.mes.label }}</label>
+                {{ form.mes }}
+                {% if form.mes.errors %}<div class="erro">{{ form.mes.errors|join:", " }}</div>{% endif %}
+            </div>
+            <div class="period-field period-dates">
+                <label for="{{ form.data_inicio.id_for_label }}">{{ form.data_inicio.label }}</label>
+                {{ form.data_inicio }}
+                {% if form.data_inicio.errors %}<div class="erro">{{ form.data_inicio.errors|join:", " }}</div>{% endif %}
+            </div>
+            <div class="period-field period-dates">
+                <label for="{{ form.data_fim.id_for_label }}">{{ form.data_fim.label }}</label>
+                {{ form.data_fim }}
+                {% if form.data_fim.errors %}<div class="erro">{{ form.data_fim.errors|join:", " }}</div>{% endif %}
+            </div>
+            <div>
+                <label for="{{ form.item.id_for_label }}">{{ form.item.label }}</label>
+                {{ form.item }}
+                {% if form.item.errors %}<div class="erro">{{ form.item.errors|join:", " }}</div>{% endif %}
+            </div>
+            <div>
+                <label for="{{ form.categoria.id_for_label }}">{{ form.categoria.label }}</label>
+                {{ form.categoria }}
+                {% if form.categoria.errors %}<div class="erro">{{ form.categoria.errors|join:", " }}</div>{% endif %}
+            </div>
+            <div>
+                <label for="{{ form.setor.id_for_label }}">{{ form.setor.label }}</label>
+                {{ form.setor }}
+                {% if form.setor.errors %}<div class="erro">{{ form.setor.errors|join:", " }}</div>{% endif %}
+            </div>
+            <div>
+                <label for="{{ form.tipo.id_for_label }}">{{ form.tipo.label }}</label>
+                {{ form.tipo }}
+                {% if form.tipo.errors %}<div class="erro">{{ form.tipo.errors|join:", " }}</div>{% endif %}
+            </div>
+        </div>
+        <div class="filter-actions">
+            <button type="submit" class="btn btn-primary">Gerar relatorio</button>
+            <button type="submit" name="export" value="pdf" class="btn btn-secondary">Exportar PDF</button>
+            <button type="submit" name="export" value="csv" class="btn btn-secondary">Exportar CSV</button>
+            <a href="{{ request.path }}" class="btn btn-secondary">Limpar</a>
+        </div>
+    </form>
+</section>
+
+{% if relatorio_valido %}
+<section class="stats-grid">
+    <article class="stat-card">
+        <strong>Custo das retiradas</strong>
+        <span>R$ {{ relatorio.totais.custo_retiradas|floatformat:2 }}</span>
+    </article>
+    <article class="stat-card">
+        <strong>Valor de entradas</strong>
+        <span>R$ {{ relatorio.totais.custo_entradas|floatformat:2 }}</span>
+    </article>
+    <article class="stat-card">
+        <strong>Quantidade retirada</strong>
+        <span>{{ relatorio.totais.retiradas }}</span>
+    </article>
+    <article class="stat-card">
+        <strong>Itens movimentados</strong>
+        <span>{{ relatorio.totais.itens_movimentados }}</span>
+    </article>
+</section>
+
+<section class="card">
+    <div class="card-header-simple">
+        <div>
+            <h3>Resumo por produto</h3>
+            {% if data_inicio and data_fim %}
+            <p>{{ data_inicio|date:"d/m/Y" }} a {{ data_fim|date:"d/m/Y" }}</p>
+            {% endif %}
+        </div>
+    </div>
+    {% if relatorio.resumo_por_item %}
+    <div class="report-table-wrap">
+        <table class="report-table">
+            <thead>
+                <tr>
+                    <th>Produto</th>
+                    <th>Categoria</th>
+                    <th class="text-right">Entradas</th>
+                    <th class="text-right">Retiradas</th>
+                    <th class="text-right">Devolvidas</th>
+                    <th class="text-right">Custo entradas</th>
+                    <th class="text-right">Custo retiradas</th>
+                    <th class="text-right">Saldo periodo</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for linha in relatorio.resumo_por_item %}
+                <tr>
+                    <td>
+                        <strong>{{ linha.item.nome }}</strong>
+                        <div class="muted">Saldo atual: {{ linha.item.quantidade_atual }} {{ linha.item.unidade_medida }}</div>
+                    </td>
+                    <td>{{ linha.item.categoria_nome }}</td>
+                    <td class="text-right">{{ linha.entradas }}</td>
+                    <td class="text-right">{{ linha.retiradas }}</td>
+                    <td class="text-right">{{ linha.devolvidas }}</td>
+                    <td class="text-right">R$ {{ linha.custo_entradas|floatformat:2 }}</td>
+                    <td class="text-right">R$ {{ linha.custo_retiradas|floatformat:2 }}</td>
+                    <td class="text-right">{{ linha.saldo_periodo }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="empty-box">Nenhuma movimentacao encontrada para os filtros selecionados.</div>
+    {% endif %}
+</section>
+
+<section class="card">
+    <h3>Retiradas por data</h3>
+    {% if relatorio.retiradas_por_data %}
+    <div class="report-table-wrap">
+        <table class="report-table">
+            <thead>
+                <tr>
+                    <th>Data</th>
+                    <th class="text-right">Movimentos</th>
+                    <th class="text-right">Quantidade retirada</th>
+                    <th class="text-right">Devolvidas</th>
+                    <th class="text-right">Custo retiradas</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for linha in relatorio.retiradas_por_data %}
+                <tr>
+                    <td>{{ linha.data|date:"d/m/Y" }}</td>
+                    <td class="text-right">{{ linha.movimentos }}</td>
+                    <td class="text-right">{{ linha.retiradas }}</td>
+                    <td class="text-right">{{ linha.devolvidas }}</td>
+                    <td class="text-right">R$ {{ linha.custo_retiradas|floatformat:2 }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="empty-box">Nenhuma retirada registrada no periodo.</div>
+    {% endif %}
+</section>
+
+<section class="card">
+    <h3>Comparativo mensal</h3>
+    {% if relatorio.comparativo_mensal %}
+    <div class="report-table-wrap">
+        <table class="report-table">
+            <thead>
+                <tr>
+                    <th>Mes</th>
+                    <th class="text-right">Entradas</th>
+                    <th class="text-right">Retiradas</th>
+                    <th class="text-right">Custo entradas</th>
+                    <th class="text-right">Custo retiradas</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for linha in relatorio.comparativo_mensal %}
+                <tr>
+                    <td>{{ linha.rotulo }}</td>
+                    <td class="text-right">{{ linha.entradas }}</td>
+                    <td class="text-right">{{ linha.retiradas }}</td>
+                    <td class="text-right">R$ {{ linha.custo_entradas|floatformat:2 }}</td>
+                    <td class="text-right">R$ {{ linha.custo_retiradas|floatformat:2 }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="empty-box">Nenhuma movimentacao para comparar no periodo.</div>
+    {% endif %}
+</section>
+
+<section class="card">
+    <h3>Movimentacoes do periodo</h3>
+    {% if movimentacoes %}
+    <div class="report-table-wrap">
+        <table class="report-table">
+            <thead>
+                <tr>
+                    <th>Data</th>
+                    <th>Tipo</th>
+                    <th>Produto</th>
+                    <th>Setor</th>
+                    <th class="text-right">Quantidade</th>
+                    <th class="text-right">Devolvida</th>
+                    <th class="text-right">Liquida</th>
+                    <th class="text-right">Custo unitario</th>
+                    <th class="text-right">Valor total</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for movimentacao in movimentacoes %}
+                <tr>
+                    <td>{{ movimentacao.data_movimentacao|date:"d/m/Y" }}</td>
+                    <td>{{ movimentacao.get_tipo_display }}</td>
+                    <td>
+                        <strong>{{ movimentacao.item.nome }}</strong>
+                        <div class="muted">{{ movimentacao.observacao|default:"Sem observacao." }}</div>
+                    </td>
+                    <td>{{ movimentacao.setor|default:"-" }}</td>
+                    <td class="text-right">{{ movimentacao.quantidade }}</td>
+                    <td class="text-right">{{ movimentacao.quantidade_devolvida }}</td>
+                    <td class="text-right">{{ movimentacao.quantidade_liquida }}</td>
+                    <td class="text-right">R$ {{ movimentacao.custo_unitario|floatformat:2 }}</td>
+                    <td class="text-right">R$ {{ movimentacao.valor_total|floatformat:2 }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="empty-box">Nenhuma movimentacao encontrada para os filtros selecionados.</div>
+    {% endif %}
+</section>
+{% endif %}
+
+<script>
+    (function () {
+        const periodo = document.getElementById("{{ form.periodo.id_for_label }}");
+        const meses = document.querySelectorAll(".period-month");
+        const datas = document.querySelectorAll(".period-dates");
+
+        function alternarPeriodo() {
+            const usarDatas = periodo && periodo.value === "datas";
+            meses.forEach((campo) => campo.classList.toggle("is-hidden", usarDatas));
+            datas.forEach((campo) => campo.classList.toggle("is-hidden", !usarDatas));
+        }
+
+        if (periodo) {
+            periodo.addEventListener("change", alternarPeriodo);
+            alternarPeriodo();
+        }
+    })();
+</script>
+{% endif %}
+{% endblock %}

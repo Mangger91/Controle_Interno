@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+
+{% block title %}Painel{% endblock %}
+{% block page_title %}Painel Principal{% endblock %}
+
+{% block content %}
+<section class="hero-panel">
+    <div>
+        <span class="section-kicker">Visao geral</span>
+        <h2>Central de trabalho</h2>
+        <p>
+            Acompanhe reunioes, estoque, rotas e notificacoes do escritorio em um unico painel.
+        </p>
+    </div>
+    <div class="hero-actions">
+        <a href="{% url 'home' %}" class="btn btn-primary">Abrir minha agenda</a>
+        <a href="/admin/" class="btn btn-secondary">Abrir admin</a>
+    </div>
+</section>
+
+<section class="stats-grid">
+    <article class="stat-card">
+        <strong>Total de reunioes visiveis</strong>
+        <span>{{ total_reunioes }}</span>
+    </article>
+    <article class="stat-card">
+        <strong>Proximas reunioes</strong>
+        <span>{{ proximas_reunioes }}</span>
+    </article>
+    <article class="stat-card">
+        <strong>Itens com atencao em estoque</strong>
+        <span>{{ itens_estoque_baixo }}</span>
+    </article>
+</section>
+
+<section class="card-grid">
+    {% for modulo in menu_sistema %}
+    <article class="module-card {% if not modulo.possui_acesso %}module-card-muted{% endif %}">
+        <div class="module-icon">{{ modulo.icone }}</div>
+        <div>
+            <h3>{{ modulo.nome }}</h3>
+            <p>{{ modulo.descricao }}</p>
+            <span class="module-role">{{ modulo.papel }}</span>
+        </div>
+        <a href="{% url modulo.rota %}" class="btn btn-secondary">Abrir modulo</a>
+    </article>
+    {% endfor %}
+</section>
+
+<section class="card">
+    <div class="card-header-simple">
+        <div>
+            <span class="section-kicker">Notificacoes</span>
+            <h3>Ultimos avisos do sistema</h3>
+        </div>
+        <a href="{% url 'central_notificacoes' %}" class="btn btn-secondary">Ver todas</a>
+    </div>
+
+    {% if notificacoes_recentes %}
+    <div class="list-stack">
+        {% for notificacao in notificacoes_recentes %}
+        <a href="{% url 'abrir_notificacao' notificacao.pk %}" class="list-row">
+            <div>
+                <strong>{{ notificacao.titulo }}</strong>
+                <p>{{ notificacao.mensagem }}</p>
+            </div>
+            <span>{{ notificacao.criada_em|date:"d/m/Y H:i" }}</span>
+        </a>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-box">
+        Nenhuma notificacao por enquanto.
+    </div>
+    {% endif %}
+</section>
+{% endblock %}

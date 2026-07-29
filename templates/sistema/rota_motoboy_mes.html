@@ -1,0 +1,272 @@
+{% extends "base.html" %}
+
+{% block title %}Rotas de {{ mes_nome }}/{{ ano }}{% endblock %}
+{% block page_title %}Rotas de {{ mes_nome }}/{{ ano }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .route-day-list {
+        display: grid;
+        gap: 16px;
+    }
+
+    .route-day {
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        background: var(--surface);
+        box-shadow: var(--shadow-sm);
+        overflow: hidden;
+    }
+
+    .route-day > summary {
+        align-items: center;
+        background: var(--accent);
+        color: #fff;
+        cursor: pointer;
+        display: flex;
+        font-size: 1.05rem;
+        justify-content: space-between;
+        list-style: none;
+        padding: 12px 16px;
+    }
+
+    .route-day > summary::-webkit-details-marker {
+        display: none;
+    }
+
+    .route-day-title {
+        font-size: 1.05rem;
+        margin: 0;
+    }
+
+    .route-day-count {
+        border: 1px solid rgba(255, 255, 255, 0.28);
+        border-radius: 999px;
+        font-size: 0.85rem;
+        padding: 4px 9px;
+    }
+
+    .route-day-content {
+        display: grid;
+        gap: 12px;
+        padding: 14px;
+    }
+
+    .route-block + .route-block {
+        border-top: 2px solid var(--border);
+    }
+
+    .route-summary {
+        align-items: center;
+        background: var(--surface-soft);
+        display: flex;
+        gap: 12px;
+        justify-content: space-between;
+        padding: 12px 14px;
+    }
+
+    .route-summary h4 {
+        margin: 0 0 4px;
+    }
+
+    .route-summary p {
+        color: var(--muted);
+        margin: 0;
+    }
+
+    .route-card-metrics {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        justify-content: flex-end;
+    }
+
+    .route-indicator {
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        background: #f8fafc;
+        color: var(--text);
+        font-size: 0.9rem;
+        font-weight: 800;
+        padding: 6px 10px;
+    }
+
+    .route-table-wrap {
+        overflow-x: auto;
+    }
+
+    .route-table {
+        border-collapse: collapse;
+        min-width: 920px;
+        width: 100%;
+    }
+
+    .route-table th,
+    .route-table td {
+        border-right: 1px solid var(--border);
+        border-top: 1px solid var(--border);
+        padding: 11px 12px;
+        text-align: left;
+        vertical-align: middle;
+    }
+
+    .route-table th:last-child,
+    .route-table td:last-child {
+        border-right: 0;
+    }
+
+    .route-table th {
+        background: #dce9fb;
+        color: var(--text);
+        font-size: 0.76rem;
+        font-weight: 800;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+    }
+
+    .route-table td:nth-child(1),
+    .route-table td:nth-child(2),
+    .route-table td:nth-child(3) {
+        font-weight: 700;
+    }
+
+    .route-status {
+        border-radius: 999px;
+        background: var(--warning-soft);
+        color: var(--warning);
+        display: inline-flex;
+        font-size: 0.74rem;
+        font-weight: 800;
+        padding: 5px 9px;
+        white-space: nowrap;
+    }
+
+    .route-status.ok {
+        background: #e7f7f4;
+        color: #115e59;
+    }
+
+    .route-status.cancelado {
+        background: var(--danger-soft);
+        color: var(--danger);
+    }
+
+    .route-empty-row {
+        color: var(--muted);
+        text-align: center !important;
+    }
+
+    @media (max-width: 760px) {
+        .route-summary {
+            align-items: stretch;
+            flex-direction: column;
+        }
+
+        .route-card-metrics {
+            justify-content: flex-start;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="module-header">
+    <div>
+        <span class="section-kicker">{{ papel_modulo_label }}</span>
+        <h2>Rotas de {{ mes_nome }} de {{ ano }}</h2>
+        <p>Visualize e acompanhe cada roteiro do motoboy.</p>
+    </div>
+    <div class="hero-actions">
+        {% if permite_edicao %}
+        <a href="{% url 'rota_motoboy_nova' %}" class="btn btn-primary">Nova rota</a>
+        {% endif %}
+        <a href="{% url 'enderecos_empresas_rota' %}" class="btn btn-secondary">Enderecos</a>
+        <a href="{% url 'rota_motoboy' %}" class="btn btn-secondary">Voltar</a>
+    </div>
+</section>
+
+{% if acesso_negado %}
+<div class="alert-banner">
+    Voce nao possui permissao para acessar essa area, contate o administrador.
+</div>
+{% else %}
+<section class="stats-grid">
+    <article class="stat-card">
+        <strong>Rotas abertas no mes</strong>
+        <span>{{ total_rotas_abertas }}</span>
+    </article>
+    <article class="stat-card">
+        <strong>KM concluido no mes</strong>
+        <span>{{ km_total_mes|floatformat:2 }}</span>
+    </article>
+</section>
+
+{% if rotas_por_data %}
+<section class="route-day-list">
+    {% for grupo in rotas_por_data %}
+    <details class="route-day" open>
+        <summary>
+            <h3 class="route-day-title">{{ grupo.data|date:"l - d/m/Y" }}</h3>
+            <span class="route-day-count">{{ grupo.rotas|length }} rota{% if grupo.rotas|length != 1 %}s{% endif %}</span>
+        </summary>
+        <div class="route-day-content">
+            {% for rota in grupo.rotas %}
+            <section class="route-block">
+                <div class="route-summary">
+                    <div>
+                        <h4>Rota de {{ rota.data|date:"d/m/Y" }}</h4>
+                        <p>
+                            {% if rota.horario_saida %}Saida {{ rota.horario_saida|time:"H:i" }} | {% endif %}
+                            Partida: {{ rota.endereco_inicio|default:"Nao informada" }}
+                        </p>
+                    </div>
+                    <div class="route-card-metrics">
+                        <span class="route-indicator">{{ rota.get_status_display }}</span>
+                        <span class="route-indicator">{{ rota.paradas.count }} rota{% if rota.paradas.count != 1 %}s{% endif %}</span>
+                        <span class="route-indicator">{{ rota.distancia_total_km|floatformat:2 }} km</span>
+                        <a href="{% url 'rota_motoboy_detalhe' rota.pk %}" class="btn btn-secondary">Abrir rota</a>
+                    </div>
+                </div>
+                <div class="route-table-wrap">
+                    <table class="route-table">
+                        <thead>
+                            <tr>
+                                <th>Setor</th>
+                                <th>Empresa</th>
+                                <th>Servico</th>
+                                <th>Endereco</th>
+                                <th>Observacoes</th>
+                                <th>Status final</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for parada in rota.paradas.all %}
+                            <tr>
+                                <td>{{ parada.setor|default:"-" }}</td>
+                                <td>{{ parada.empresa }}</td>
+                                <td>{{ parada.get_tipo_servico_display }}</td>
+                                <td>{{ parada.endereco|default:"-" }}</td>
+                                <td>{{ parada.observacao|default:"-" }}</td>
+                                <td>
+                                    <span class="route-status {{ parada.status_final|lower }}">{{ parada.get_status_final_display }}</span>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="6" class="route-empty-row">Nenhuma parada cadastrada nesta rota.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+            {% endfor %}
+        </div>
+    </details>
+    {% endfor %}
+</section>
+{% else %}
+    <div class="empty-box">Nenhuma rota cadastrada neste mes.</div>
+{% endif %}
+{% endif %}
+{% endblock %}

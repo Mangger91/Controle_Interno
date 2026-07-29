@@ -1,0 +1,391 @@
+{% extends "base.html" %}
+
+{% block title %}Detalhes da Rota{% endblock %}
+{% block page_title %}Detalhes da Rota{% endblock %}
+
+{% block extra_css %}
+<style>
+    .route-summary {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 12px;
+        margin-bottom: 18px;
+    }
+
+    .route-summary-item {
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        background: #f8fafc;
+        padding: 12px;
+    }
+
+    .route-summary-item strong {
+        display: block;
+        color: var(--muted);
+        font-size: 0.85rem;
+        margin-bottom: 4px;
+    }
+
+    .route-summary-item span {
+        font-size: 1.35rem;
+        font-weight: 800;
+    }
+
+    .route-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 14px;
+    }
+
+    .route-stop-meta {
+        display: grid;
+        gap: 4px;
+    }
+
+    .route-stop-distance {
+        color: #075985;
+        font-weight: 800;
+    }
+
+    .route-endpoint {
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        background: #eef5ff;
+        padding: 13px;
+    }
+
+    .route-endpoint.final {
+        background: #e7f7f4;
+    }
+
+    .route-endpoint strong {
+        display: block;
+        margin-bottom: 4px;
+    }
+
+    .route-endpoint p {
+        color: var(--muted);
+        margin: 0;
+    }
+
+    .address-field,
+    .company-field {
+        position: relative;
+    }
+
+    .address-suggestions,
+    .company-suggestions {
+        position: absolute;
+        z-index: 30;
+        top: calc(100% + 6px);
+        left: 0;
+        right: 0;
+        display: none;
+        max-height: 260px;
+        overflow-y: auto;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        background: #fff;
+        box-shadow: 0 12px 26px rgba(15, 23, 42, 0.16);
+    }
+
+    .address-suggestions.is-open {
+        display: block;
+    }
+
+    .company-suggestions.is-open {
+        display: block;
+    }
+
+    .address-suggestion,
+    .company-suggestion {
+        width: 100%;
+        border: 0;
+        border-bottom: 1px solid var(--border);
+        background: transparent;
+        color: var(--text);
+        cursor: pointer;
+        padding: 10px 12px;
+        text-align: left;
+    }
+
+    .company-suggestion strong,
+    .company-suggestion span {
+        display: block;
+    }
+
+    .company-suggestion span {
+        color: var(--muted);
+        font-size: 0.88rem;
+        margin-top: 3px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="module-header">
+    <div>
+        <span class="section-kicker">{{ papel_modulo_label }}</span>
+        <h2>Rota de {{ rota.data|date:"d/m/Y" }}</h2>
+        <p>Data: {{ rota.data|date:"d/m/Y" }} | Status: {{ rota.get_status_display }}</p>
+        {% if rota.horario_saida %}
+        <p>Horario de saida: {{ rota.horario_saida|time:"H:i" }}</p>
+        {% endif %}
+        {% if rota.endereco_inicio %}
+        <p>Partida: {{ rota.endereco_inicio }}</p>
+        {% endif %}
+    </div>
+    <div class="hero-actions">
+        {% if permite_edicao and rota.status == "ABERTA" %}
+        <a href="{% url 'rota_motoboy_editar' rota.pk %}" class="btn btn-secondary">Editar rota</a>
+        <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="acao_rota" value="concluir">
+            <button type="submit" class="btn btn-primary">Confirmar rota</button>
+        </form>
+        <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="acao_rota" value="cancelar">
+            <button type="submit" class="btn btn-secondary">Cancelar</button>
+        </form>
+        {% endif %}
+        <a href="{% url 'rota_motoboy_mes' rota.data.year rota.data.month %}" class="btn btn-secondary">Voltar para o mes</a>
+    </div>
+</section>
+
+{% if acesso_negado %}
+<div class="alert-banner">
+    Voce nao possui permissao para acessar essa area, contate o administrador.
+</div>
+{% else %}
+<section class="card">
+    <div class="route-summary">
+        <div class="route-summary-item">
+            <strong>KM total calculado</strong>
+            <span>{{ rota.distancia_total_km|floatformat:2 }} km</span>
+        </div>
+        <div class="route-summary-item">
+            <strong>Paradas</strong>
+            <span>{{ rota.paradas.count }}</span>
+        </div>
+        <div class="route-summary-item">
+            <strong>Ultimo calculo</strong>
+            <span>{% if rota.rota_otimizada_em %}{{ rota.rota_otimizada_em|date:"d/m/Y H:i" }}{% else %}-{% endif %}</span>
+        </div>
+    </div>
+
+    <h3>Percurso otimizado</h3>
+    <div class="list-stack">
+        <article class="route-endpoint">
+            <strong>Local de partida</strong>
+            <p>{{ rota.endereco_inicio|default:"Nao informado" }}</p>
+        </article>
+        {% for parada in rota.paradas.all %}
+        <article class="list-row static-row">
+            <div>
+                <strong>Rota {{ parada.ordem }} - {{ parada.empresa }}</strong>
+                <div class="route-stop-meta">
+                    <p>Setor: {{ parada.setor|default:"-" }} | Tipo: {{ parada.get_tipo_servico_display }}</p>
+                    <p>Endereco: {{ parada.endereco|default:"Nao informado" }}</p>
+                    <p class="route-stop-distance">KM desde o ponto anterior: {{ parada.distancia_km|floatformat:2 }} km</p>
+                    <p>Status final: {{ parada.get_status_final_display }}</p>
+                    <p>{{ parada.observacao|default:"Sem observacoes." }}</p>
+                </div>
+            </div>
+        </article>
+        {% empty %}
+        <div class="empty-box">Nenhuma parada cadastrada.</div>
+        {% endfor %}
+    </div>
+</section>
+
+{% if permite_edicao and rota.status == "ABERTA" %}
+<section class="card form-card">
+    <h3>Adicionar parada</h3>
+    <form method="post" data-address-search-url="{% url 'buscar_enderecos_rota' %}" data-company-search-url="{% url 'buscar_empresas_rota' %}">
+        {% csrf_token %}
+        <input type="hidden" name="acao_rota" value="adicionar_parada">
+        <div class="form-grid">
+            {% for field in parada_form %}
+            <div class="{% if field.name == 'endereco' or field.name == 'observacao' %}field-span{% endif %} {% if field.name == 'endereco' %}address-field{% endif %} {% if field.name == 'empresa' %}company-field{% endif %}">
+                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                {{ field }}
+                {% if field.errors %}
+                <div class="erro">{{ field.errors|join:", " }}</div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+        <div class="route-actions">
+            <button type="submit" class="btn btn-primary">Adicionar parada</button>
+        </div>
+    </form>
+</section>
+{% endif %}
+{% endif %}
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const form = document.querySelector("[data-address-search-url]");
+    let addressTimer = null;
+    let companyTimer = null;
+
+    function closeSuggestions() {
+        document.querySelectorAll(".address-suggestions").forEach(function (box) {
+            box.classList.remove("is-open");
+            box.innerHTML = "";
+        });
+    }
+
+    function closeCompanySuggestions() {
+        document.querySelectorAll(".company-suggestions").forEach(function (box) {
+            box.classList.remove("is-open");
+            box.innerHTML = "";
+        });
+    }
+
+    function ensureSuggestionBox(input) {
+        let box = input.parentElement.querySelector(".address-suggestions");
+        if (!box) {
+            box = document.createElement("div");
+            box.className = "address-suggestions";
+            input.parentElement.appendChild(box);
+        }
+        return box;
+    }
+
+    function ensureCompanyBox(input) {
+        let box = input.parentElement.querySelector(".company-suggestions");
+        if (!box) {
+            box = document.createElement("div");
+            box.className = "company-suggestions";
+            input.parentElement.appendChild(box);
+        }
+        return box;
+    }
+
+    async function searchAddress(input) {
+        const term = input.value.trim();
+        if (!form) {
+            closeSuggestions();
+            return;
+        }
+
+        const url = new URL(form.dataset.addressSearchUrl, window.location.origin);
+        url.searchParams.set("q", term);
+
+        try {
+            const response = await fetch(url);
+            const data = await response.json();
+            const box = ensureSuggestionBox(input);
+            box.innerHTML = "";
+            (data.resultados || []).forEach(function (item) {
+                const button = document.createElement("button");
+                button.type = "button";
+                button.className = "address-suggestion";
+                button.textContent = item.nome;
+                button.addEventListener("click", function () {
+                    input.value = item.nome;
+                    closeSuggestions();
+                });
+                box.appendChild(button);
+            });
+            box.classList.toggle("is-open", box.children.length > 0);
+        } catch (error) {
+            closeSuggestions();
+        }
+    }
+
+    function renderCompanySuggestions(input, items) {
+        const box = ensureCompanyBox(input);
+        box.innerHTML = "";
+
+        if (!items.length) {
+            closeCompanySuggestions();
+            return;
+        }
+
+        items.forEach(function (item) {
+            const button = document.createElement("button");
+            button.type = "button";
+            button.className = "company-suggestion";
+            button.innerHTML = "<strong></strong><span></span>";
+            button.querySelector("strong").textContent = item.nome;
+            button.querySelector("span").textContent = item.endereco;
+            button.addEventListener("click", function () {
+                input.value = item.nome;
+                const addressInput = form.querySelector("input[name='endereco']");
+                if (addressInput) {
+                    addressInput.value = item.endereco;
+                }
+                closeCompanySuggestions();
+            });
+            box.appendChild(button);
+        });
+        box.classList.add("is-open");
+    }
+
+    async function searchCompany(input) {
+        if (!form || !form.dataset.companySearchUrl) {
+            closeCompanySuggestions();
+            return;
+        }
+
+        const url = new URL(form.dataset.companySearchUrl, window.location.origin);
+        const term = input.value.trim();
+        if (term) {
+            url.searchParams.set("q", term);
+        }
+
+        try {
+            const response = await fetch(url);
+            const data = await response.json();
+            renderCompanySuggestions(input, data.resultados || []);
+        } catch (error) {
+            closeCompanySuggestions();
+        }
+    }
+
+    document.addEventListener("input", function (event) {
+        const input = event.target.closest("input[data-address-autocomplete]");
+        if (!input) return;
+        window.clearTimeout(addressTimer);
+        addressTimer = window.setTimeout(function () {
+            searchAddress(input);
+        }, 300);
+    });
+
+    document.addEventListener("input", function (event) {
+        const input = event.target.closest("input[data-company-autocomplete]");
+        if (!input) return;
+        window.clearTimeout(companyTimer);
+        companyTimer = window.setTimeout(function () {
+            searchCompany(input);
+        }, 220);
+    });
+
+    document.addEventListener("focusin", function (event) {
+        const companyInput = event.target.closest("input[data-company-autocomplete]");
+        if (companyInput) {
+            searchCompany(companyInput);
+            return;
+        }
+
+        const addressInput = event.target.closest("input[data-address-autocomplete]");
+        if (addressInput) {
+            searchAddress(addressInput);
+        }
+    });
+
+    document.addEventListener("click", function (event) {
+        if (!event.target.closest(".address-field")) {
+            closeSuggestions();
+        }
+        if (!event.target.closest(".company-field")) {
+            closeCompanySuggestions();
+        }
+    });
+});
+</script>
+{% endblock %}

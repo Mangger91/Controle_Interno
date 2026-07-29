@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+
+{% block title %}Usuarios{% endblock %}
+{% block page_title %}Usuarios{% endblock %}
+
+{% block content %}
+<section class="module-header">
+    <div>
+        <span class="section-kicker">{{ papel_modulo_label }}</span>
+        <h2>{{ modulo_titulo }}</h2>
+        <p>{{ modulo_descricao }}</p>
+    </div>
+    {% if not acesso_negado and permite_edicao %}
+    <a href="{% url 'usuario_novo' %}" class="btn btn-primary">Novo usuario</a>
+    {% endif %}
+</section>
+
+{% if acesso_negado %}
+<div class="alert-banner">
+    Voce nao possui permissao para acessar essa area, contate o administrador.
+</div>
+{% else %}
+<section class="card filter-panel">
+    <form method="get" class="filter-form">
+        <div>
+            <label for="id_q">Pesquisar</label>
+            <input type="text" id="id_q" name="q" value="{{ filtros.q }}" placeholder="Nome, e-mail ou cargo">
+        </div>
+        <div>
+            <label for="id_setor">Setor</label>
+            <select id="id_setor" name="setor">
+                <option value="">Todos</option>
+                {% for valor, label in setores %}
+                <option value="{{ valor }}" {% if filtros.setor == valor %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div>
+            <label for="id_funcao">Funcao</label>
+            <select id="id_funcao" name="funcao">
+                <option value="">Todas</option>
+                {% for valor, label in funcoes %}
+                <option value="{{ valor }}" {% if filtros.funcao == valor %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div>
+            <label for="id_nivel">Perfil</label>
+            <select id="id_nivel" name="nivel">
+                <option value="">Todos</option>
+                {% for valor, label in niveis %}
+                <option value="{{ valor }}" {% if filtros.nivel == valor %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div>
+            <label for="id_status">Status</label>
+            <select id="id_status" name="status">
+                <option value="">Todos</option>
+                <option value="ativo" {% if filtros.status == "ativo" %}selected{% endif %}>Ativo</option>
+                <option value="inativo" {% if filtros.status == "inativo" %}selected{% endif %}>Inativo</option>
+            </select>
+        </div>
+        <div class="filter-actions">
+            <button type="submit" class="btn btn-primary">Filtrar</button>
+            <a href="{{ request.path }}" class="btn btn-secondary">Limpar</a>
+        </div>
+    </form>
+</section>
+
+<section class="card">
+    <div class="card-header-simple">
+        <div>
+            <span class="section-kicker">Controle de acesso</span>
+            <h3>Usuarios cadastrados</h3>
+            <p>{{ total_usuarios }} usuario{% if total_usuarios != 1 %}s{% endif %} encontrado{% if total_usuarios != 1 %}s{% endif %}</p>
+        </div>
+    </div>
+
+    {% if usuarios %}
+    <div class="list-stack">
+        {% for usuario in usuarios %}
+        <article class="list-row static-row">
+            <div>
+                <strong>{{ usuario.get_full_name|default:usuario.email }}</strong>
+                <p>{{ usuario.email }}</p>
+                {% if usuario.perfil %}
+                <p>
+                    Setor: {{ usuario.perfil.get_setor_display|default:"Nao definido" }}
+                    | Funcao: {{ usuario.perfil.get_funcao_display|default:"Nao definida" }}
+                    {% if usuario.perfil.cargo %}| Cargo: {{ usuario.perfil.cargo }}{% endif %}
+                </p>
+                {% endif %}
+                <p>
+                    Nivel:
+                    {% if usuario.perfil %}
+                        {{ usuario.perfil.get_nivel_perfil_display }}
+                    {% else %}
+                        Nao definido
+                    {% endif %}
+                    {% if not usuario.is_active %}- Inativo{% endif %}
+                </p>
+            </div>
+            <a href="{% url 'usuario_editar' usuario.pk %}" class="btn btn-secondary">Editar</a>
+        </article>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-box">Nenhum usuario cadastrado.</div>
+    {% endif %}
+</section>
+{% endif %}
+{% endblock %}

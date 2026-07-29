@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+
+{% block title %}Minha Agenda{% endblock %}
+{% block page_title %}Minha Agenda{% endblock %}
+
+{% block content %}
+<section class="module-header">
+    <div>
+        <span class="section-kicker">{{ papel_modulo_label }}</span>
+        <h2>{{ modulo_titulo }}</h2>
+        <p>{{ modulo_descricao }}</p>
+    </div>
+    <div class="hero-actions">
+        {% if not acesso_negado %}
+        <a href="{% url 'relatorio_reunioes' %}" class="btn btn-secondary">Relatorio</a>
+        {% endif %}
+        {% if not acesso_negado and permite_edicao %}
+        <a href="{% url 'nova_reuniao' %}" class="btn btn-primary">Agendar reuniao</a>
+        {% endif %}
+    </div>
+</section>
+
+{% if acesso_negado %}
+<div class="alert-banner">
+    Voce nao possui permissao para acessar essa area, contate o administrador.
+</div>
+{% else %}
+<section class="stats-grid">
+    <article class="stat-card">
+        <strong>Total de reunioes</strong>
+        <span>{{ total_reunioes }}</span>
+    </article>
+    <article class="stat-card">
+        <strong>Proximas agendadas</strong>
+        <span>{{ proximas_reunioes }}</span>
+    </article>
+</section>
+
+{% if agenda_organizada %}
+<section class="card-grid">
+    {% for periodo in agenda_organizada %}
+        {% for mes in periodo.meses %}
+        <article class="module-card">
+            <div class="module-icon">{{ mes.nome|slice:":2"|upper }}</div>
+            <div>
+                <h3>{{ mes.nome }} / {{ periodo.ano }}</h3>
+                <p>Veja os compromissos consolidados deste periodo.</p>
+            </div>
+            <a href="{% url 'lista_reunioes_mes' periodo.ano mes.numero %}" class="btn btn-secondary">Abrir calendario</a>
+        </article>
+        {% endfor %}
+    {% endfor %}
+</section>
+{% else %}
+<div class="empty-box">Nenhuma reuniao encontrada. Cadastre a primeira reuniao para iniciar a agenda.</div>
+{% endif %}
+{% endif %}
+{% endblock %}

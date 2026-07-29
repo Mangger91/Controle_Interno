@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{% block title %}Editar Reuniao{% endblock %}
+{% block page_title %}Editar Reuniao{% endblock %}
+
+{% block content %}
+<section class="module-header">
+    <div>
+        <span class="section-kicker">{{ papel_modulo_label }}</span>
+        <h2>Editar {{ reuniao.titulo }}</h2>
+        <p>Atualize os dados e reenvie as informacoes aos participantes.</p>
+    </div>
+    <a href="{% url 'detalhe_reuniao' reuniao.pk %}" class="btn btn-secondary">Voltar</a>
+</section>
+
+{% if acesso_negado %}
+<div class="alert-banner">
+    Voce nao possui permissao para acessar essa area, contate o administrador.
+</div>
+{% else %}
+<section class="card form-card">
+    <form method="post">
+        {% csrf_token %}
+        {% include "sistema/includes/reuniao_form_fields.html" %}
+        <button type="submit" class="btn btn-primary">Salvar alteracoes</button>
+    </form>
+</section>
+{% endif %}
+{% endblock %}

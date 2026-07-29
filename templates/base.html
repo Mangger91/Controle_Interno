@@ -1,0 +1,108 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Sistema Corporativo{% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'css/app.css' %}">
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    {% block body %}
+    <div class="app-shell">
+        {% if user.is_authenticated %}
+        <aside class="sidebar">
+            <a href="{% url 'dashboard' %}" class="sidebar-brand">
+                <span class="sidebar-kicker">Suite interna</span>
+                <strong>Falavinha Inteligencia Contabil</strong>
+                <span>Agenda, estoque, rotas e modulos internos em uma so plataforma.</span>
+            </a>
+
+            <nav class="sidebar-nav">
+                {% for item in menu_sistema %}
+                    <a href="{% url item.rota %}" class="nav-card {% if request.resolver_match and request.resolver_match.url_name == item.rota %}active{% endif %} {% if not item.possui_acesso %}restricted{% endif %}">
+                        <span class="nav-icon">{{ item.icone }}</span>
+                        <span>
+                            <strong>{{ item.nome }}</strong>
+                            <small>{{ item.papel_label }}</small>
+                        </span>
+                    </a>
+                {% endfor %}
+            </nav>
+        </aside>
+        {% endif %}
+
+        <div class="main-shell">
+            {% if user.is_authenticated %}
+            <header class="topbar">
+                <div>
+                    <span class="brand-kicker">Painel corporativo</span>
+                    <h1>{% block page_title %}Sistema Corporativo{% endblock %}</h1>
+                </div>
+
+                <div class="topbar-actions">
+                    {% if pode_acessar_usuarios %}
+                    <a href="{% url 'usuario_novo' %}" class="top-link primary-top-link">Cadastrar Usuario</a>
+                    {% endif %}
+                    <a href="{% url 'central_notificacoes' %}" class="top-link">
+                        Notificacoes
+                        {% if notificacoes_nao_lidas %}
+                            <span class="badge-counter">{{ notificacoes_nao_lidas }}</span>
+                        {% endif %}
+                    </a>
+                    <a href="{% url 'minha_conta' %}" class="top-link">Minha Conta</a>
+                    <form method="post" action="{% url 'logout' %}" class="inline">
+                        {% csrf_token %}
+                        <button type="submit" class="top-link danger-link">Sair</button>
+                    </form>
+                </div>
+            </header>
+            {% endif %}
+
+            <main class="content-shell">
+                {% if messages %}
+                <div class="mensagens">
+                    {% for message in messages %}
+                    <div class="mensagem {{ message.tags }}">{{ message }}</div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+                {% if user.is_authenticated %}
+                <div class="page-back-top" data-global-back-top>
+                    <button type="button" class="btn btn-secondary" onclick="history.back()">Voltar</button>
+                </div>
+                {% endif %}
+
+                {% block content %}{% endblock %}
+
+                {% if user.is_authenticated %}
+                <div class="page-back-bottom">
+                    <button type="button" class="btn btn-secondary" onclick="history.back()">Voltar</button>
+                </div>
+                <script>
+                document.addEventListener("DOMContentLoaded", function () {
+                    const globalBack = document.querySelector("[data-global-back-top]");
+                    const content = document.querySelector(".content-shell");
+                    if (!globalBack || !content) return;
+
+                    const localBack = Array.from(
+                        content.querySelectorAll(".module-header .btn, .agenda-toolbar .btn, .hero-actions .btn")
+                    ).some(function (element) {
+                        return element !== globalBack.querySelector("button")
+                            && element.textContent.trim().toLowerCase().startsWith("voltar");
+                    });
+
+                    if (localBack) {
+                        globalBack.hidden = true;
+                    }
+                });
+                </script>
+                {% endif %}
+            </main>
+        </div>
+    </div>
+    {% endblock %}
+</body>
+</html>

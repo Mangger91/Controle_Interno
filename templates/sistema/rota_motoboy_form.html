@@ -1,0 +1,433 @@
+{% extends "base.html" %}
+
+{% block title %}Nova Rota{% endblock %}
+{% block page_title %}Nova Rota{% endblock %}
+
+{% block extra_css %}
+<style>
+    .route-builder {
+        display: grid;
+        gap: 18px;
+    }
+
+    .route-stop-list {
+        display: grid;
+        gap: 14px;
+    }
+
+    .route-stop-card {
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        background: #fff;
+        padding: 14px;
+    }
+
+    .route-stop-header {
+        align-items: center;
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 12px;
+    }
+
+    .address-field,
+    .company-field {
+        position: relative;
+    }
+
+    .address-suggestions,
+    .company-suggestions {
+        position: absolute;
+        z-index: 30;
+        top: calc(100% + 6px);
+        left: 0;
+        right: 0;
+        display: none;
+        max-height: 260px;
+        overflow-y: auto;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        background: #fff;
+        box-shadow: 0 12px 26px rgba(15, 23, 42, 0.16);
+    }
+
+    .address-suggestions.is-open {
+        display: block;
+    }
+
+    .company-suggestions.is-open {
+        display: block;
+    }
+
+    .address-suggestion,
+    .company-suggestion {
+        width: 100%;
+        border: 0;
+        border-bottom: 1px solid var(--border);
+        background: transparent;
+        color: var(--text);
+        cursor: pointer;
+        padding: 10px 12px;
+        text-align: left;
+    }
+
+    .address-suggestion:last-child {
+        border-bottom: 0;
+    }
+
+    .company-suggestion:last-child {
+        border-bottom: 0;
+    }
+
+    .company-suggestion strong,
+    .company-suggestion span {
+        display: block;
+    }
+
+    .company-suggestion span {
+        color: var(--muted);
+        font-size: 0.88rem;
+        margin-top: 3px;
+    }
+
+    .required-mark {
+        color: #dc2626;
+        margin-left: 4px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="module-header">
+    <div>
+        <span class="section-kicker">{{ papel_modulo_label }}</span>
+        <h2>{{ modulo_titulo }}</h2>
+        <p>{{ modulo_descricao }}</p>
+    </div>
+    <a href="{% url 'rota_motoboy' %}" class="btn btn-secondary">Voltar</a>
+</section>
+
+{% if acesso_negado %}
+<div class="alert-banner">
+    Voce nao possui permissao para acessar essa area, contate o administrador.
+</div>
+{% else %}
+<section class="card form-card">
+    <form method="post" class="route-builder" data-address-search-url="{% url 'buscar_enderecos_rota' %}" data-company-search-url="{% url 'buscar_empresas_rota' %}">
+        {% csrf_token %}
+        <h3>Dados da rota</h3>
+        <div class="form-grid">
+            {% for field in form %}
+            <div class="{% if field.name == 'endereco_inicio' %}field-span address-field{% endif %}">
+                <label for="{{ field.id_for_label }}">
+                    {{ field.label }}
+                    {% if field.field.required %}<span class="required-mark">*</span>{% endif %}
+                </label>
+                {{ field }}
+                {% if field.errors %}
+                <div class="erro">{{ field.errors|join:", " }}</div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+
+        <div class="section-line">
+            <div>
+                <h3>Paradas da rota</h3>
+                <p>Informe as paradas para a rota. Se quiser, você pode adicionar mais de uma parada antes de salvar.</p>
+            </div>
+            <button type="button" class="btn btn-secondary" data-add-stop>Adicionar parada</button>
+        </div>
+
+        {{ paradas_formset.management_form }}
+        {% if paradas_formset.non_form_errors %}
+        <div class="erro">{{ paradas_formset.non_form_errors|join:", " }}</div>
+        {% endif %}
+
+        <div class="route-stop-list" data-stop-list>
+            {% for parada_form in paradas_formset %}
+            <article class="route-stop-card" data-stop-card>
+                <div class="route-stop-header">
+                    <strong data-stop-title>Parada {{ forloop.counter }}</strong>
+                    <button type="button" class="btn btn-secondary" data-remove-stop>Remover</button>
+                </div>
+                <div class="form-grid">
+                    {% for field in parada_form %}
+                    <div class="{% if field.name == 'endereco' or field.name == 'observacao' %}field-span{% endif %} {% if field.name == 'endereco' %}address-field{% endif %} {% if field.name == 'empresa' %}company-field{% endif %}">
+                        <label for="{{ field.id_for_label }}">
+                            {{ field.label }}
+                            {% if field.field.required %}<span class="required-mark">*</span>{% endif %}
+                        </label>
+                        {{ field }}
+                        {% if field.errors %}
+                        <div class="erro">{{ field.errors|join:", " }}</div>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+            </article>
+            {% endfor %}
+        </div>
+
+        <template id="empty-stop-template">
+            <article class="route-stop-card" data-stop-card>
+                <div class="route-stop-header">
+                    <strong data-stop-title>Parada __number__</strong>
+                    <button type="button" class="btn btn-secondary" data-remove-stop>Remover</button>
+                </div>
+                <div class="form-grid">
+                    {% for field in paradas_formset.empty_form %}
+                    <div class="{% if field.name == 'endereco' or field.name == 'observacao' %}field-span{% endif %} {% if field.name == 'endereco' %}address-field{% endif %} {% if field.name == 'empresa' %}company-field{% endif %}">
+                        <label for="{{ field.id_for_label }}">
+                            {{ field.label }}
+                            {% if field.field.required %}<span class="required-mark">*</span>{% endif %}
+                        </label>
+                        {{ field }}
+                    </div>
+                    {% endfor %}
+                </div>
+            </article>
+        </template>
+
+        <button type="submit" class="btn btn-primary">Salvar, organizar e calcular km</button>
+    </form>
+</section>
+{% endif %}
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const form = document.querySelector("[data-address-search-url]");
+    const stopList = document.querySelector("[data-stop-list]");
+    const addStop = document.querySelector("[data-add-stop]");
+    const template = document.getElementById("empty-stop-template");
+    const totalForms = document.getElementById("id_paradas-TOTAL_FORMS");
+    let addressTimer = null;
+    let companyTimer = null;
+
+    function closeSuggestions() {
+        document.querySelectorAll(".address-suggestions").forEach(function (box) {
+            box.classList.remove("is-open");
+            box.innerHTML = "";
+        });
+    }
+
+    function closeCompanySuggestions() {
+        document.querySelectorAll(".company-suggestions").forEach(function (box) {
+            box.classList.remove("is-open");
+            box.innerHTML = "";
+        });
+    }
+
+    function ensureSuggestionBox(input) {
+        let box = input.parentElement.querySelector(".address-suggestions");
+        if (!box) {
+            box = document.createElement("div");
+            box.className = "address-suggestions";
+            input.parentElement.appendChild(box);
+        }
+        return box;
+    }
+
+    function ensureCompanyBox(input) {
+        let box = input.parentElement.querySelector(".company-suggestions");
+        if (!box) {
+            box = document.createElement("div");
+            box.className = "company-suggestions";
+            input.parentElement.appendChild(box);
+        }
+        return box;
+    }
+
+    function renderSuggestions(input, items) {
+        const box = ensureSuggestionBox(input);
+        box.innerHTML = "";
+
+        if (!items.length) {
+            closeSuggestions();
+            return;
+        }
+
+        items.forEach(function (item) {
+            const button = document.createElement("button");
+            button.type = "button";
+            button.className = "address-suggestion";
+            button.textContent = item.nome;
+            button.addEventListener("click", function () {
+                input.value = item.nome;
+                closeSuggestions();
+            });
+            box.appendChild(button);
+        });
+        box.classList.add("is-open");
+    }
+
+    async function searchAddress(input) {
+        const term = input.value.trim();
+        if (!form) {
+            closeSuggestions();
+            return;
+        }
+
+        const url = new URL(form.dataset.addressSearchUrl, window.location.origin);
+        url.searchParams.set("q", term);
+
+        try {
+            const response = await fetch(url);
+            const data = await response.json();
+            renderSuggestions(input, data.resultados || []);
+        } catch (error) {
+            closeSuggestions();
+        }
+    }
+
+    function renderCompanySuggestions(input, items) {
+        const box = ensureCompanyBox(input);
+        box.innerHTML = "";
+
+        if (!items.length) {
+            closeCompanySuggestions();
+            return;
+        }
+
+        items.forEach(function (item) {
+            const button = document.createElement("button");
+            button.type = "button";
+            button.className = "company-suggestion";
+            button.innerHTML = "<strong></strong><span></span>";
+            button.querySelector("strong").textContent = item.nome;
+            button.querySelector("span").textContent = item.endereco;
+            button.addEventListener("click", function () {
+                input.value = item.nome;
+                const card = input.closest("[data-stop-card]") || form;
+                const addressInput = card.querySelector("input[name$='-endereco'], input[name='endereco']");
+                if (addressInput) {
+                    addressInput.value = item.endereco;
+                }
+                closeCompanySuggestions();
+            });
+            box.appendChild(button);
+        });
+        box.classList.add("is-open");
+    }
+
+    async function searchCompany(input) {
+        if (!form || !form.dataset.companySearchUrl) {
+            closeCompanySuggestions();
+            return;
+        }
+
+        const url = new URL(form.dataset.companySearchUrl, window.location.origin);
+        const term = input.value.trim();
+        if (term) {
+            url.searchParams.set("q", term);
+        }
+
+        try {
+            const response = await fetch(url);
+            const data = await response.json();
+            renderCompanySuggestions(input, data.resultados || []);
+        } catch (error) {
+            closeCompanySuggestions();
+        }
+    }
+
+    function refreshStopTitles() {
+        if (!stopList || !totalForms) return;
+
+        const cards = Array.from(stopList.querySelectorAll("[data-stop-card]"));
+        cards.forEach(function (card, index) {
+            const title = card.querySelector("[data-stop-title]");
+            if (title) {
+                title.textContent = "Parada " + (index + 1);
+            }
+            card.querySelectorAll("input, select, textarea, label").forEach(function (element) {
+                ["name", "id", "for"].forEach(function (attr) {
+                    const value = element.getAttribute(attr);
+                    if (value) {
+                        element.setAttribute(attr, value.replace(/paradas-\d+-/g, "paradas-" + index + "-"));
+                    }
+                });
+            });
+        });
+        totalForms.value = cards.length;
+        cards.forEach(function (card) {
+            const remove = card.querySelector("[data-remove-stop]");
+            if (remove) {
+                remove.disabled = cards.length === 1;
+            }
+        });
+    }
+
+    if (addStop && template && stopList && totalForms) {
+        addStop.addEventListener("click", function () {
+            const index = Number(totalForms.value);
+            const html = template.innerHTML
+                .replace(/__prefix__/g, index)
+                .replace(/__number__/g, index + 1);
+            stopList.insertAdjacentHTML("beforeend", html);
+            refreshStopTitles();
+        });
+    }
+
+    if (stopList) {
+        stopList.addEventListener("click", function (event) {
+            const button = event.target.closest("[data-remove-stop]");
+            if (!button) return;
+            const cards = stopList.querySelectorAll("[data-stop-card]");
+            if (cards.length <= 1) return;
+            button.closest("[data-stop-card]").remove();
+            refreshStopTitles();
+        });
+    }
+
+    document.addEventListener("input", function (event) {
+        const input = event.target.closest("input[data-address-autocomplete]");
+        if (!input) return;
+        window.clearTimeout(addressTimer);
+        addressTimer = window.setTimeout(function () {
+            searchAddress(input);
+        }, 300);
+    });
+
+    document.addEventListener("input", function (event) {
+        const input = event.target.closest("input[data-company-autocomplete]");
+        if (!input) return;
+        window.clearTimeout(companyTimer);
+        companyTimer = window.setTimeout(function () {
+            searchCompany(input);
+        }, 220);
+    });
+
+    document.addEventListener("focusin", function (event) {
+        const companyInput = event.target.closest("input[data-company-autocomplete]");
+        if (companyInput) {
+            searchCompany(companyInput);
+            return;
+        }
+
+        const addressInput = event.target.closest("input[data-address-autocomplete]");
+        if (addressInput) {
+            searchAddress(addressInput);
+        }
+    });
+
+    document.addEventListener("keydown", function (event) {
+        if (event.key === "Escape") {
+            closeSuggestions();
+            closeCompanySuggestions();
+        }
+    });
+
+    document.addEventListener("click", function (event) {
+        if (!event.target.closest(".address-field")) {
+            closeSuggestions();
+        }
+        if (!event.target.closest(".company-field")) {
+            closeCompanySuggestions();
+        }
+    });
+
+    refreshStopTitles();
+});
+</script>
+{% endblock %}
