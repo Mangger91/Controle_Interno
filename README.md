@@ -1,3 +1,5 @@
+Fluxo de desenvolvimento local validado em 30/07/2026.
+
 # Agenda de Reuniões
 
 Sistema interno de agendamento de reuniões desenvolvido com Django, com foco em organização visual, cadastro de participantes, controle por mês e envio de e-mails.
