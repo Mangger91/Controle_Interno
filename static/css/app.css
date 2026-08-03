@@ -29,6 +29,7 @@
 
 html {
     min-width: 320px;
+    font-size: 15px;
 }
 
 body {
@@ -36,8 +37,8 @@ body {
     min-height: 100vh;
     color: var(--text);
     font-family: "Aptos", "Segoe UI", "Trebuchet MS", sans-serif;
-    font-size: 15px;
-    line-height: 1.45;
+    font-size: 14px;
+    line-height: 1.4;
     background:
         linear-gradient(90deg, rgba(0, 67, 255, 0.045) 1px, transparent 1px),
         linear-gradient(180deg, rgba(0, 67, 255, 0.035) 1px, transparent 1px),
@@ -68,7 +69,7 @@ select {
     top: 0;
     height: 100vh;
     overflow-y: auto;
-    padding: 18px 14px;
+    padding: 16px 12px;
     color: #f8fbfa;
     background: var(--sidebar);
     border-right: 1px solid rgba(255, 255, 255, 0.08);
@@ -77,20 +78,20 @@ select {
 .sidebar-brand {
     display: grid;
     gap: 5px;
-    padding: 14px;
+    padding: 12px;
     border-radius: var(--radius);
     background: rgba(255, 255, 255, 0.06);
     box-shadow: inset 3px 0 0 var(--brand-cyan);
 }
 
 .sidebar-brand strong {
-    font-size: 1.16rem;
+    font-size: 1.05rem;
     letter-spacing: 0;
 }
 
 .sidebar-brand span:last-child {
     color: var(--sidebar-muted);
-    font-size: 0.86rem;
+    font-size: 0.8rem;
 }
 
 .sidebar-kicker,
@@ -100,7 +101,7 @@ select {
     width: fit-content;
     align-items: center;
     color: var(--muted);
-    font-size: 0.72rem;
+    font-size: 0.68rem;
     font-weight: 700;
     letter-spacing: 0.08em;
     text-transform: uppercase;
@@ -118,11 +119,11 @@ select {
 
 .nav-card {
     display: grid;
-    grid-template-columns: 38px minmax(0, 1fr);
-    gap: 10px;
+    grid-template-columns: 34px minmax(0, 1fr);
+    gap: 9px;
     align-items: center;
-    min-height: 54px;
-    padding: 9px 10px;
+    min-height: 48px;
+    padding: 8px 9px;
     border-radius: var(--radius);
     color: rgba(255, 255, 255, 0.88);
     transition: background 0.15s ease, color 0.15s ease, transform 0.15s ease;
@@ -147,14 +148,14 @@ select {
     display: grid;
     place-items: center;
     border-radius: 7px;
-    font-size: 0.78rem;
+    font-size: 0.72rem;
     font-weight: 800;
     letter-spacing: 0;
 }
 
 .nav-icon {
-    width: 38px;
-    height: 38px;
+    width: 34px;
+    height: 34px;
     color: #dbe9ff;
     background: rgba(0, 67, 255, 0.20);
 }
@@ -171,7 +172,7 @@ select {
     margin-top: 2px;
     color: currentColor;
     opacity: 0.64;
-    font-size: 0.78rem;
+    font-size: 0.72rem;
 }
 
 .main-shell {
@@ -188,7 +189,7 @@ select {
     justify-content: space-between;
     align-items: center;
     gap: 16px;
-    padding: 16px 28px;
+    padding: 14px 24px;
     background: rgba(246, 247, 249, 0.90);
     border-bottom: 1px solid var(--border);
     backdrop-filter: blur(12px);
@@ -196,7 +197,7 @@ select {
 
 .topbar h1 {
     margin: 3px 0 0;
-    font-size: 1.42rem;
+    font-size: 1.28rem;
     line-height: 1.15;
 }
 
@@ -214,8 +215,8 @@ select {
     display: inline-flex;
     justify-content: center;
     align-items: center;
-    min-height: 38px;
-    padding: 9px 13px;
+    min-height: 36px;
+    padding: 8px 12px;
     border: 1px solid var(--border-strong);
     border-radius: var(--radius);
     background: var(--surface);
@@ -273,13 +274,13 @@ select {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    min-width: 24px;
-    min-height: 24px;
-    padding: 3px 8px;
+    min-width: 22px;
+    min-height: 22px;
+    padding: 2px 7px;
     border-radius: 999px;
     color: #ffffff;
     background: var(--accent);
-    font-size: 0.76rem;
+    font-size: 0.7rem;
     font-weight: 800;
 }
 
@@ -295,7 +296,7 @@ select {
 
 .content-shell {
     width: min(100%, 1280px);
-    padding: 22px 28px 34px;
+    padding: 20px 24px 30px;
 }
 
 .page-back-top {
@@ -330,7 +331,7 @@ select {
 .module-header,
 .card,
 .login-panel {
-    padding: 18px;
+    padding: 16px;
 }
 
 .hero-panel {
@@ -354,7 +355,7 @@ select {
 .module-header h2,
 .hero-panel h2 {
     margin: 4px 0 4px;
-    font-size: 1.55rem;
+    font-size: 1.38rem;
     line-height: 1.15;
     letter-spacing: 0;
 }
@@ -394,7 +395,7 @@ select {
 }
 
 .stat-card {
-    padding: 16px;
+    padding: 14px;
 }
 
 .stat-card strong,
@@ -409,23 +410,23 @@ select {
 .module-role {
     display: block;
     margin-bottom: 7px;
-    font-size: 0.76rem;
+    font-size: 0.7rem;
     font-weight: 800;
     letter-spacing: 0.06em;
     text-transform: uppercase;
 }
 
 .stat-card span {
-    font-size: 1.85rem;
+    font-size: 1.58rem;
     font-weight: 800;
 }
 
 .module-card {
     display: grid;
-    grid-template-columns: 44px minmax(0, 1fr);
+    grid-template-columns: 40px minmax(0, 1fr);
     gap: 12px;
     align-items: start;
-    padding: 15px;
+    padding: 14px;
 }
 
 .module-card .btn {
@@ -437,8 +438,8 @@ select {
 }
 
 .module-icon {
-    width: 44px;
-    height: 44px;
+    width: 40px;
+    height: 40px;
     color: var(--accent-strong);
     background: var(--accent-soft);
     box-shadow: inset 0 -2px 0 rgba(42, 168, 255, 0.48);
@@ -448,7 +449,7 @@ select {
 .meeting-card h3,
 .card h3 {
     margin: 0 0 6px;
-    font-size: 1rem;
+    font-size: 0.94rem;
 }
 
 .module-card p {
@@ -479,7 +480,7 @@ select {
     justify-content: space-between;
     gap: 14px;
     align-items: center;
-    padding: 13px;
+    padding: 11px;
     border: 1px solid var(--border);
     border-radius: var(--radius);
     background: var(--surface);
@@ -500,7 +501,7 @@ a.list-row:hover {
 }
 
 .meeting-card {
-    padding: 16px;
+    padding: 14px;
 }
 
 .meeting-card-top {
@@ -517,7 +518,7 @@ a.list-row:hover {
 }
 
 .meta-grid div {
-    padding: 12px;
+    padding: 10px;
     border: 1px solid var(--border);
     border-radius: var(--radius);
     background: var(--surface-soft);
@@ -547,7 +548,7 @@ a.list-row:hover {
     display: grid;
     gap: 12px;
     margin: 16px 0;
-    padding: 14px;
+    padding: 12px;
     border: 1px solid var(--border);
     border-radius: var(--radius);
     background: var(--surface-soft);
@@ -655,7 +656,7 @@ textarea,
 select,
 .form-control {
     width: 100%;
-    padding: 10px 12px;
+    padding: 9px 11px;
     border: 1px solid var(--border-strong);
     border-radius: var(--radius);
     background: #ffffff;
@@ -672,7 +673,7 @@ select:focus,
 }
 
 textarea {
-    min-height: 112px;
+    min-height: 100px;
     resize: vertical;
 }
 
@@ -691,7 +692,7 @@ textarea {
 .alert-banner,
 .empty-box,
 .suggestion-box {
-    padding: 13px 14px;
+    padding: 11px 12px;
     border-radius: var(--radius);
 }
 
@@ -758,7 +759,7 @@ textarea {
 .login-panel-brand h1 {
     max-width: 720px;
     margin: 12px 0;
-    font-size: 2.2rem;
+    font-size: 1.9rem;
     line-height: 1.08;
 }
 
@@ -776,7 +777,7 @@ textarea {
 
 .login-panel-form h2 {
     margin: 7px 0 6px;
-    font-size: 1.5rem;
+    font-size: 1.32rem;
 }
 
 .login-panel-form {
@@ -834,16 +835,20 @@ textarea {
 }
 
 @media (max-width: 720px) {
-    body {
+    html {
         font-size: 14px;
+    }
+
+    body {
+        font-size: 13px;
     }
 
     .topbar,
     .content-shell,
     .sidebar,
     .login-layout {
-        padding-left: 14px;
-        padding-right: 14px;
+        padding-left: 12px;
+        padding-right: 12px;
     }
 
     .topbar {
@@ -866,7 +871,7 @@ textarea {
     .module-header,
     .card,
     .login-panel {
-        padding: 14px;
+        padding: 12px;
     }
 
     .hero-panel,
