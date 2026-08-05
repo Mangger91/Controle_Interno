@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% block title %}Excluir Rota{% endblock %}
+{% block page_title %}Excluir Rota{% endblock %}
+
+{% block content %}
+<section class="module-header">
+    <div>
+        <span class="section-kicker">{{ papel_modulo_label }}</span>
+        <h2>Excluir rota de {{ rota.data|date:"d/m/Y" }}</h2>
+        <p>{{ modulo_descricao }}</p>
+    </div>
+    <a href="{% url 'rota_motoboy_mes' rota.data.year rota.data.month %}" class="btn btn-secondary">Voltar</a>
+</section>
+
+{% if acesso_negado %}
+<div class="alert-banner">
+    Voce nao possui permissao para acessar essa area, contate o administrador.
+</div>
+{% else %}
+<section class="card">
+    <h3>Confirmar exclusao</h3>
+    <p>Esta acao remove a rota e suas {{ rota.paradas.count }} parada{% if rota.paradas.count != 1 %}s{% endif %}.</p>
+    <form method="post" class="form-inline">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-danger">Excluir rota</button>
+        <a href="{% url 'rota_motoboy_detalhe' rota.pk %}" class="btn btn-secondary">Cancelar</a>
+    </form>
+</section>
+{% endif %}
+{% endblock %}

@@ -1091,6 +1091,36 @@ def detalhe_item_estoque(request, pk):
 
 
 @login_required
+def excluir_item_estoque(request, pk):
+    item = get_object_or_404(ItemEstoque.objects.prefetch_related("movimentacoes"), pk=pk)
+    modulo = _modulo_por_area_estoque(item.area)
+    rota_estoque = rota_do_modulo_estoque(modulo)
+    context = contexto_modulo(
+        request,
+        modulo,
+        "Excluir Item",
+        f"Confirme a exclusao de {item.nome}.",
+        extra={
+            "item": item,
+            "rota_estoque": rota_estoque,
+            "movimentacoes_vinculadas": item.movimentacoes.count(),
+        },
+    )
+    if context["acesso_negado"]:
+        return render(request, "sistema/item_estoque_confirmar_exclusao.html", context)
+    if not context["permite_exclusao"]:
+        messages.error(request, "Apenas administradores podem excluir itens.")
+        return redirect("detalhe_item_estoque", pk=item.pk)
+
+    if request.method == "POST":
+        item.delete()
+        messages.success(request, "Item de estoque excluido com sucesso.")
+        return redirect(rota_estoque)
+
+    return render(request, "sistema/item_estoque_confirmar_exclusao.html", context)
+
+
+@login_required
 def movimentar_item_estoque(request, pk):
     item = get_object_or_404(ItemEstoque, pk=pk)
     modulo = _modulo_por_area_estoque(item.area)

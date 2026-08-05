@@ -464,6 +464,7 @@ class EstoqueTests(TestCase):
             password="Senha12345",
         )
         perfil, _ = PerfilUsuario.objects.get_or_create(usuario=self.usuario)
+        perfil.papel_estoque_adm = "ADMINISTRADOR"
         perfil.papel_estoque_ti = "ADMINISTRADOR"
         perfil.papel_estoque_expediente = "ADMINISTRADOR"
         perfil.save()
@@ -804,6 +805,35 @@ class EstoqueTests(TestCase):
         )
         self.assertTrue(CategoriaEstoque.objects.filter(pk=categoria.pk).exists())
 
+    def test_estoque_adm_exibe_e_exclui_item_para_admin(self):
+        item_adm = ItemEstoque.objects.create(
+            area=ItemEstoque.Area.ADMINISTRATIVO,
+            nome="Papel timbrado",
+            estoque_minimo=10,
+            custo_unitario=Decimal("2.00"),
+        )
+        MovimentacaoEstoque.objects.create(
+            item=item_adm,
+            tipo=MovimentacaoEstoque.TipoMovimento.ENTRADA,
+            quantidade=20,
+            custo_unitario=Decimal("2.00"),
+            responsavel=self.usuario,
+        )
+
+        self.client.login(username="estoque@empresa.com.br", password="Senha12345")
+        resposta_lista = self.client.get(reverse("estoque_adm"))
+        self.assertContains(resposta_lista, "Excluir item")
+
+        resposta_confirmacao = self.client.get(reverse("excluir_item_estoque", args=[item_adm.pk]))
+        self.assertContains(resposta_confirmacao, "Confirmar exclusao")
+        self.assertContains(resposta_confirmacao, "1 movimentacao vinculada")
+
+        resposta = self.client.post(reverse("excluir_item_estoque", args=[item_adm.pk]))
+
+        self.assertRedirects(resposta, reverse("estoque_adm"))
+        self.assertFalse(ItemEstoque.objects.filter(pk=item_adm.pk).exists())
+        self.assertFalse(MovimentacaoEstoque.objects.filter(item_id=item_adm.pk).exists())
+
 
 class RotaMotoboyTests(TestCase):
     def setUp(self):
@@ -1099,6 +1129,41 @@ class RotaMotoboyTests(TestCase):
         self.assertContains(resposta, "Status final")
         self.assertContains(resposta, "Comprar materiais")
         self.assertEqual(resposta.context["rotas_por_data"][0]["data"], date(2026, 4, 17))
+
+    def test_mes_exibe_botoes_de_editar_concluir_e_excluir_rota(self):
+        rota = RotaMotoboy.objects.create(data=date(2026, 4, 10), titulo="Rota Fiscal")
+
+        self.client.login(username="rota@empresa.com.br", password="Senha12345")
+        resposta = self.client.get(reverse("rota_motoboy_mes", args=[2026, 4]))
+
+        self.assertContains(resposta, reverse("rota_motoboy_editar", args=[rota.pk]))
+        self.assertContains(resposta, reverse("rota_motoboy_concluir", args=[rota.pk]))
+        self.assertContains(resposta, reverse("rota_motoboy_excluir", args=[rota.pk]))
+        self.assertContains(resposta, "Concluir")
+
+    def test_concluir_rota_pela_listagem_do_mes(self):
+        rota = RotaMotoboy.objects.create(data=date(2026, 4, 10), titulo="Rota Fiscal")
+
+        self.client.login(username="rota@empresa.com.br", password="Senha12345")
+        resposta = self.client.post(reverse("rota_motoboy_concluir", args=[rota.pk]))
+        rota.refresh_from_db()
+
+        self.assertRedirects(resposta, reverse("rota_motoboy_mes", args=[2026, 4]))
+        self.assertEqual(rota.status, RotaMotoboy.Status.CONCLUIDA)
+
+    def test_excluir_rota_remove_paradas(self):
+        rota = RotaMotoboy.objects.create(data=date(2026, 4, 10), titulo="Rota Fiscal")
+        rota.paradas.create(ordem=1, empresa="Empresa A", endereco="Rua A")
+        rota.paradas.create(ordem=2, empresa="Empresa B", endereco="Rua B")
+
+        self.client.login(username="rota@empresa.com.br", password="Senha12345")
+        resposta_confirmacao = self.client.get(reverse("rota_motoboy_excluir", args=[rota.pk]))
+        self.assertContains(resposta_confirmacao, "2 paradas")
+
+        resposta = self.client.post(reverse("rota_motoboy_excluir", args=[rota.pk]))
+
+        self.assertRedirects(resposta, reverse("rota_motoboy_mes", args=[2026, 4]))
+        self.assertFalse(RotaMotoboy.objects.filter(pk=rota.pk).exists())
 
     def test_marcar_rota_como_concluida_remove_da_lista_do_mes(self):
         rota = RotaMotoboy.objects.create(data=date(2026, 4, 10), titulo="Rota Fiscal")

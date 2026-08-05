@@ -457,6 +457,9 @@
                             <a href="{% url 'editar_item_estoque' item.pk %}" class="btn btn-secondary stock-icon-action" title="Editar item" aria-label="Editar {{ item.nome }}">&#9998;</a>
                             <a href="{% url 'movimentar_item_estoque' item.pk %}" class="btn btn-primary">Movimentar</a>
                             {% endif %}
+                            {% if permite_exclusao %}
+                            <a href="{% url 'excluir_item_estoque' item.pk %}" class="btn btn-danger stock-icon-action" title="Excluir item" aria-label="Excluir {{ item.nome }}">&#128465;</a>
+                            {% endif %}
                         </div>
                     </td>
                 </tr>

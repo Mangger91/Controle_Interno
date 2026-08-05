@@ -19,6 +19,9 @@
         <a href="{% url 'editar_item_estoque' item.pk %}" class="btn btn-secondary">Editar item</a>
         <a href="{% url 'movimentar_item_estoque' item.pk %}" class="btn btn-primary">Nova movimentacao</a>
         {% endif %}
+        {% if permite_exclusao %}
+        <a href="{% url 'excluir_item_estoque' item.pk %}" class="btn btn-danger">Excluir item</a>
+        {% endif %}
     </div>
 </section>
 

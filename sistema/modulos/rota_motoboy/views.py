@@ -44,6 +44,10 @@ def _preparar_rota_sem_destino_final(rota):
     rota.longitude_destino = None
 
 
+def _redirecionar_para_mes_da_rota(rota):
+    return redirect("rota_motoboy_mes", ano=rota.data.year, mes=rota.data.month)
+
+
 def _sincronizar_endereco_empresa(parada):
     nome = (parada.empresa or "").strip()
     endereco = (parada.endereco or "").strip()
@@ -397,10 +401,64 @@ def rota_motoboy_detalhe(request, pk):
             )
             rota.save(update_fields=["status", "atualizado_em"])
             messages.success(request, "Status da rota atualizado com sucesso.")
-            return redirect("rota_motoboy_mes", ano=rota.data.year, mes=rota.data.month)
+            return _redirecionar_para_mes_da_rota(rota)
 
     context["parada_form"] = parada_form
     return render(request, "sistema/rota_motoboy_detalhe.html", context)
+
+
+@login_required
+def rota_motoboy_concluir(request, pk):
+    rota = get_object_or_404(RotaMotoboy, pk=pk)
+    context = contexto_modulo(
+        request,
+        ModuloSistema.ROTA_MOTOBOY,
+        "Concluir Rota",
+        "Finalize a rota do motoboy.",
+        extra={"rota": rota},
+    )
+    if request.method != "POST":
+        return redirect("rota_motoboy_detalhe", pk=rota.pk)
+    if context["acesso_negado"] or not context["permite_edicao"]:
+        messages.error(request, "Seu perfil nao permite concluir rotas neste modulo.")
+        return _redirecionar_para_mes_da_rota(rota)
+    if rota.status == RotaMotoboy.Status.CANCELADA:
+        messages.error(request, "Rotas canceladas nao podem ser concluidas.")
+        return _redirecionar_para_mes_da_rota(rota)
+    if rota.status == RotaMotoboy.Status.CONCLUIDA:
+        messages.info(request, "Esta rota ja estava concluida.")
+        return _redirecionar_para_mes_da_rota(rota)
+
+    rota.status = RotaMotoboy.Status.CONCLUIDA
+    rota.save(update_fields=["status", "atualizado_em"])
+    messages.success(request, "Rota concluida com sucesso.")
+    return _redirecionar_para_mes_da_rota(rota)
+
+
+@login_required
+def rota_motoboy_excluir(request, pk):
+    rota = get_object_or_404(RotaMotoboy.objects.prefetch_related("paradas"), pk=pk)
+    context = contexto_modulo(
+        request,
+        ModuloSistema.ROTA_MOTOBOY,
+        "Excluir Rota",
+        f"Confirme a exclusao da rota de {rota.data.strftime('%d/%m/%Y')}.",
+        extra={"rota": rota},
+    )
+    if context["acesso_negado"]:
+        return render(request, "sistema/rota_motoboy_confirmar_exclusao.html", context)
+    if not context["permite_exclusao"]:
+        messages.error(request, "Apenas administradores podem excluir rotas.")
+        return redirect("rota_motoboy_detalhe", pk=rota.pk)
+
+    if request.method == "POST":
+        ano = rota.data.year
+        mes = rota.data.month
+        rota.delete()
+        messages.success(request, "Rota excluida com sucesso.")
+        return redirect("rota_motoboy_mes", ano=ano, mes=mes)
+
+    return render(request, "sistema/rota_motoboy_confirmar_exclusao.html", context)
 
 
 @login_required

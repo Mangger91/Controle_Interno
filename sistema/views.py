@@ -24,6 +24,7 @@ from .modulos.estoque.views import (
     estoque_expediente,
     estoque_ti,
     excluir_categoria_estoque,
+    excluir_item_estoque,
     movimentar_item_estoque,
     nova_categoria_estoque,
     novo_item_estoque,
@@ -31,7 +32,9 @@ from .modulos.estoque.views import (
 )
 from .modulos.rota_motoboy.views import (
     rota_motoboy,
+    rota_motoboy_concluir,
     rota_motoboy_detalhe,
+    rota_motoboy_excluir,
     rota_motoboy_mes,
     rota_motoboy_nova,
 )
@@ -59,6 +62,7 @@ __all__ = [
     "estoque_expediente",
     "estoque_ti",
     "excluir_categoria_estoque",
+    "excluir_item_estoque",
     "home",
     "lista_reunioes_mes",
     "minha_conta",
@@ -70,7 +74,9 @@ __all__ = [
     "reenviar_email_reuniao",
     "relatorio_estoque",
     "rota_motoboy",
+    "rota_motoboy_concluir",
     "rota_motoboy_detalhe",
+    "rota_motoboy_excluir",
     "rota_motoboy_mes",
     "rota_motoboy_nova",
     "usuario_editar",

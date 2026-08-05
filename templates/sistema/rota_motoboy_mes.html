@@ -81,6 +81,17 @@
         justify-content: flex-end;
     }
 
+    .route-row-actions {
+        display: inline-flex;
+        flex-wrap: wrap;
+        gap: 7px;
+        justify-content: flex-end;
+    }
+
+    .route-row-actions form {
+        margin: 0;
+    }
+
     .route-indicator {
         border: 1px solid var(--border);
         border-radius: 8px;
@@ -165,6 +176,10 @@
         .route-card-metrics {
             justify-content: flex-start;
         }
+
+        .route-row-actions {
+            justify-content: flex-start;
+        }
     }
 </style>
 {% endblock %}
@@ -224,7 +239,19 @@
                         <span class="route-indicator">{{ rota.get_status_display }}</span>
                         <span class="route-indicator">{{ rota.paradas.count }} rota{% if rota.paradas.count != 1 %}s{% endif %}</span>
                         <span class="route-indicator">{{ rota.distancia_total_km|floatformat:2 }} km</span>
-                        <a href="{% url 'rota_motoboy_detalhe' rota.pk %}" class="btn btn-secondary">Abrir rota</a>
+                        <div class="route-row-actions">
+                            <a href="{% url 'rota_motoboy_detalhe' rota.pk %}" class="btn btn-secondary">Abrir rota</a>
+                            {% if permite_edicao and rota.status == "ABERTA" %}
+                            <a href="{% url 'rota_motoboy_editar' rota.pk %}" class="btn btn-secondary">Editar</a>
+                            <form method="post" action="{% url 'rota_motoboy_concluir' rota.pk %}">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-primary">Concluir</button>
+                            </form>
+                            {% endif %}
+                            {% if permite_exclusao %}
+                            <a href="{% url 'rota_motoboy_excluir' rota.pk %}" class="btn btn-danger">Excluir</a>
+                            {% endif %}
+                        </div>
                     </div>
                 </div>
                 <div class="route-table-wrap">

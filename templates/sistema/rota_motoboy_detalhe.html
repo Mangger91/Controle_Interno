@@ -142,13 +142,16 @@
         <form method="post">
             {% csrf_token %}
             <input type="hidden" name="acao_rota" value="concluir">
-            <button type="submit" class="btn btn-primary">Confirmar rota</button>
+            <button type="submit" class="btn btn-primary">Concluir rota</button>
         </form>
         <form method="post">
             {% csrf_token %}
             <input type="hidden" name="acao_rota" value="cancelar">
             <button type="submit" class="btn btn-secondary">Cancelar</button>
         </form>
+        {% endif %}
+        {% if permite_exclusao %}
+        <a href="{% url 'rota_motoboy_excluir' rota.pk %}" class="btn btn-danger">Excluir rota</a>
         {% endif %}
         <a href="{% url 'rota_motoboy_mes' rota.data.year rota.data.month %}" class="btn btn-secondary">Voltar para o mes</a>
     </div>
